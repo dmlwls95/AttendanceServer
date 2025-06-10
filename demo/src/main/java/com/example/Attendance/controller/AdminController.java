@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
 import com.example.Attendance.dto.AllUsersResponse;
 import com.example.Attendance.dto.AttendanceResponse;
+import com.example.Attendance.dto.AttendanceUpdateRequest;
 import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.service.AdminService;
@@ -68,6 +70,14 @@ public class AdminController {
 			@RequestParam int month)
 	{
 		return adminService.getAttendanceMonthSummary(year, month);
+	}
+	
+	@Operation(summary = "특정 기록 수정")
+	@PutMapping("attendance/history")
+	public ResponseEntity<?> putAttendance(@RequestBody AttendanceUpdateRequest request)
+	{
+		log.debug(request.toString());
+		return adminService.putUserAttendanceRecord(request);
 	}
 	
 	

@@ -1,5 +1,6 @@
 package com.example.Attendance.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -8,12 +9,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
 import com.example.Attendance.dto.AllUsersResponse;
 import com.example.Attendance.dto.AttendanceResponse;
+import com.example.Attendance.dto.AttendanceUpdateRequest;
 import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.entity.Attendance;
@@ -135,6 +138,26 @@ public class AdminService {
 					);
 		}
 		return result;
+	}
+	
+	public ResponseEntity<?> putUserAttendanceRecord(AttendanceUpdateRequest request)
+	{
+		Attendance attendance = attendanceRepository.findById(request.getId())
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 id 액세스 에러"));
+		
+		attendance.setDate(request.getDate());
+		attendance.setClockIn(request.getClockIn());
+		attendance.setClockOut(request.getClockOut());
+		attendance.setIsLate(request.getIsLate());
+		attendance.setIsLeftEarly(request.getIsLeftEarly());
+		
+		// 총 근무시간 재계산
+	    double hours = Duration.between(request.getClockIn(), request.getClockOut()).toMinutes() / 60.0;
+	    attendance.setTotalHours(hours);
+	    
+	    attendanceRepository.save(attendance);
+	    
+		return ResponseEntity.ok("수정 완료");
 	}
 	
 	public String generateCsvForMonth(LocalDate from, LocalDate to)
