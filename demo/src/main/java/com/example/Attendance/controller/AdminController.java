@@ -76,7 +76,6 @@ public class AdminController {
 	@PutMapping("attendance/history")
 	public ResponseEntity<?> putAttendance(@RequestBody AttendanceUpdateRequest request)
 	{
-		log.debug(request.toString());
 		return adminService.putUserAttendanceRecord(request);
 	}
 	
