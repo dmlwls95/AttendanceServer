@@ -42,12 +42,6 @@ public class AttendanceService {
 		
 		LocalDate today = LocalDate.now();
 
-		/*Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
-				.orElse(Attendance.builder()
-					.user(user)
-					.date(today)
-					.clockIn(LocalDateTime.now())
-					.build());*/
 		
 		Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
 				.orElse(null);
@@ -95,8 +89,10 @@ public class AttendanceService {
 		
 		attendance.setClockOut(LocalDateTime.now());
 		
+		
 		double hours = (double) java.time.Duration.between(
-				attendance.getClockIn(), attendance.getClockOut()).toMinutes() / 60;
+				attendance.getClockIn().getHour() < startOfWork ? LocalDateTime.of(attendance.getDate().getYear(), attendance.getDate().getMonth(), attendance.getDate().getDayOfMonth(), startOfWork, 0, 0) : attendance.getClockIn()
+				, attendance.getClockOut().getHour() > endOfWork ? LocalDateTime.of(attendance.getDate().getYear(), attendance.getDate().getMonth(), attendance.getDate().getDayOfMonth(), endOfWork, 0, 0) : attendance.getClockOut() ).toMinutes() / 60;
 		
 		attendance.setTotalHours(hours);
 		
@@ -209,5 +205,24 @@ public class AttendanceService {
 				.filter(d -> !(d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY))
 				.count();
 	}
+	
+	public boolean hasCheckedInToday(String email)
+	{
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+		
+		LocalDate today = LocalDate.now();
+
+		Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
+				.orElse(null);
+		
+		if(attendance != null && attendance.getClockIn() != null)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	
 
 }

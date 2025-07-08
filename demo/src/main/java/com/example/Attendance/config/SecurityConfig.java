@@ -26,6 +26,7 @@ public class SecurityConfig {
             .authorizeRequests()
                 .antMatchers("/auth/**", "swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers("/game/**").permitAll()
                 .anyRequest().authenticated()
             .and()
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userRepository), UsernamePasswordAuthenticationFilter.class);

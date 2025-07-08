@@ -2,11 +2,14 @@ package com.example.Attendance.service;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -33,6 +36,8 @@ public class AdminService {
 	private final AttendanceRepository attendanceRepository;
 	private final UserRepository userRepository;
 	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+	private final int startOfWork = 9;
+	private final int endOfWork = 18;
 	
 	public List<AllUsersResponse> getAllUsers()
 	{
@@ -152,16 +157,20 @@ public class AdminService {
 		attendance.setIsLeftEarly(request.getIsLeftEarly());
 		
 		// 총 근무시간 재계산
-	    double hours = Duration.between(request.getClockIn(), request.getClockOut()).toMinutes() / 60.0;
+		double hours = (double) java.time.Duration.between(
+				request.getClockIn().getHour() < startOfWork ? LocalDateTime.of(request.getDate().getYear(), request.getDate().getMonth(), request.getDate().getDayOfMonth(), startOfWork, 0, 0) : request.getClockIn()
+				, request.getClockOut().getHour() > endOfWork ? LocalDateTime.of(request.getDate().getYear(), request.getDate().getMonth(), request.getDate().getDayOfMonth(), endOfWork, 0, 0) : request.getClockOut() ).toMinutes() / 60;
 	    attendance.setTotalHours(hours);
 	    
 	    attendanceRepository.save(attendance);
 	    
-		return ResponseEntity.ok("수정 완료");
+	    Map<String, String> response = new HashMap<>();
+	    response.put("message", "수정 완료");
+	    return ResponseEntity.ok(response);
 	}
 	
 	public String generateCsvForMonth(LocalDate from, LocalDate to)
-	{
+	{ 
 
 		
 		List<Attendance> records = attendanceRepository.findAllByDateBetween(from, to);
