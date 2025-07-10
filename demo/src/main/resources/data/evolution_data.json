@@ -1,0 +1,14 @@
+[
+	{
+		"evolveStage" : 0,
+		"requiredGummy" : 10,
+		"requiredPoint" : 0,
+		"monName" : "Kintaimon_zolmongi"
+	},
+	{
+		"evolveStage" : 1,
+		"requiredGummy" : 10,
+		"requiredPoint" : 0,
+		"monName" : "Kintaimon_chulgeunmongi"
+	}
+]
