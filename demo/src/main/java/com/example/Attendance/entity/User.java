@@ -1,5 +1,7 @@
 package com.example.Attendance.entity;
 
+import java.time.LocalDate;
+
 import javax.persistence.*;
 import lombok.*;
 
@@ -27,11 +29,14 @@ public class User {
 	@Column(nullable = false)
 	private String password;
 	
+	// 프로그램 내부에서만 관리
 	@Enumerated(EnumType.STRING)
 	private Role role;
 	
 	public enum Role {
 		USER, ADMIN
 	}
+	
+	
 
 }
