@@ -1,5 +1,7 @@
 package com.example.Attendance.entity;
 
+import java.time.LocalDate;
+
 import javax.persistence.*;
 import lombok.*;
 
@@ -16,7 +18,7 @@ public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator ="user_seq")
 	@SequenceGenerator(name = "user_seq", sequenceName = "USER_SEQ", allocationSize = 1)
-	private Long id;//primary
+	private Long id;
 	
 	@Column(nullable = false, name = "work_name")
 	private String name;
@@ -27,10 +29,14 @@ public class User {
 	@Column(nullable = false)
 	private String password;
 	
+	// 프로그램 내부에서만 관리
 	@Enumerated(EnumType.STRING)
 	private Role role;
 	
 	public enum Role {
 		USER, ADMIN
 	}
+	
+	
+
 }
