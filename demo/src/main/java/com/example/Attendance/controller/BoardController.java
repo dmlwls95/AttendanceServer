@@ -1,7 +1,7 @@
 package com.example.Attendance.controller;
 
 import com.example.Attendance.dto.BoardDAO;
-import com.example.Attendance.dto.BoardDTO;
+import com.example.Attendance.entity.Board;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +24,7 @@ public class BoardController {
         int startRow = (page - 1) * pageSize + 1;
         int endRow = page * pageSize;
 
-        List<BoardDTO> list = boardDAO.selectPage(startRow, endRow);
+        List<Board> list = boardDAO.selectPage(startRow, endRow);
         int totalCount = boardDAO.countAll();
         int totalPage = (int) Math.ceil(totalCount / (double) pageSize);
 
@@ -34,10 +34,15 @@ public class BoardController {
         result.put("totalPage", totalPage);
         return result;
     }
-
+    //게시글 본문 조회
+    @GetMapping("/detail")
+    public Board detail(@RequestParam int id) {
+        return boardDAO.selectById(id);
+    }
+    
     // 📝 게시글 작성
     @PostMapping("/write")
-    public Map<String, String> write(@RequestBody BoardDTO dto) {
+    public Map<String, String> write(@RequestBody Board dto) {
         boardDAO.insert(dto);
         Map<String, String> response = new HashMap<>();
         response.put("message", "글이 등록되었습니다.");

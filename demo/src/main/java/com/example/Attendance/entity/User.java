@@ -16,7 +16,7 @@ public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator ="user_seq")
 	@SequenceGenerator(name = "user_seq", sequenceName = "USER_SEQ", allocationSize = 1)
-	private Long id;
+	private Long id;//primary
 	
 	@Column(nullable = false, name = "work_name")
 	private String name;
@@ -33,5 +33,4 @@ public class User {
 	public enum Role {
 		USER, ADMIN
 	}
-
 }

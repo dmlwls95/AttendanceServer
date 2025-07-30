@@ -11,16 +11,41 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.example.Attendance.dto.BoardDTO;
+import com.example.Attendance.entity.Board;
 
 @Repository
 public class BoardDAO {
 
     @Autowired
     private DataSource dataSource;
+ // 단일 게시글 조회
+    public Board selectById(int id) {
+        String sql = "SELECT * FROM board WHERE id = ?";
+        try (
+            Connection conn = dataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+        ) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Board board = new Board();
+                    board.setId(rs.getInt("id"));
+                    board.setTitle(rs.getString("title"));
+                    board.setContent(rs.getString("content"));
+                    board.setWriter(rs.getString("writer"));
+                    board.setWriteDate(rs.getDate("write_date")); // DB 컬럼명에 맞게 조정
+                    return board;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     // 글 등록
-    public void insert(BoardDTO dto) {
+    public void insert(Board dto) {
         String sql = "INSERT INTO board (id, title, content, writer) VALUES (board_seq.NEXTVAL, ?, ?, ?)";
         try (
             Connection conn = dataSource.getConnection();
@@ -36,8 +61,8 @@ public class BoardDAO {
     }
 
     // 페이징된 게시글 목록 조회
-    public List<BoardDTO> selectPage(int startRow, int endRow) {
-        List<BoardDTO> list = new ArrayList<>();
+    public List<Board> selectPage(int startRow, int endRow) {
+        List<Board> list = new ArrayList<>();
         String sql = 
             "SELECT * FROM ( " +
             "  SELECT ROWNUM rnum, a.* FROM ( " +
@@ -53,7 +78,7 @@ public class BoardDAO {
             ps.setInt(2, startRow);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    BoardDTO dto = new BoardDTO();
+                    Board dto = new Board();
                     dto.setId(rs.getInt("id"));
                     dto.setTitle(rs.getString("title"));
                     dto.setContent(rs.getString("content"));
@@ -100,6 +125,3 @@ public class BoardDAO {
         }
     }
 } 
-
-
-
