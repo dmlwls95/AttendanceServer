@@ -36,9 +36,9 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/admin")
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class AdminController {
-	private final AdminService adminService;
+	private final AdminService adminService = null;
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
 	@PostMapping("register")
@@ -124,9 +124,8 @@ public class AdminController {
 	
 	
 	
-	//************* 사용자 관리 컨트롤러 ***********************************
-	@GetMapping("getalluserdata")
-	public 
-	
+//	//************* 사용자 관리 컨트롤러 ***********************************
+//	@GetMapping("getalluserdata")
+
 
 }

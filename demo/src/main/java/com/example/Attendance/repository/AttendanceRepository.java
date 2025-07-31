@@ -15,3 +15,4 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>{
 	List<Attendance> findAllByDateBetween(LocalDate from, LocalDate to);
 
 }
+//이것처럼 board도 리펙토링
