@@ -125,8 +125,8 @@ public class AdminController {
 	
 	
 	//************* 사용자 관리 컨트롤러 ***********************************
-	@GetMapping("getalluserdata")
-	public 
+	//@GetMapping("getalluserdata")
+	//public 
 	
 
 }
