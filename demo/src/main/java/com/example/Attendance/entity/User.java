@@ -37,6 +37,18 @@ public class User {
 		USER, ADMIN
 	}
 	
+	@ManyToOne
+	@JoinColumn(name= "rankid")
+	private Rank rank;
+	
+	
+	@ManyToOne
+	@JoinColumn(name= "worktypeid")
+	private WorkType worktype;
+	
+	@ManyToOne
+	@JoinColumn(name= "deptid")
+	private Department dept;
 	
 
 }
