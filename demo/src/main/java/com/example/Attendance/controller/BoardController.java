@@ -1,56 +1,56 @@
 package com.example.Attendance.controller;
 
-import com.example.Attendance.entity.Board;
-import com.example.Attendance.repository.BoardRepository;
+import com.example.Attendance.dto.BoardDTO;
+import com.example.Attendance.service.BoardService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/board")
+@RequiredArgsConstructor
 public class BoardController {
 
-    @Autowired
-    private BoardRepository boardRepository;
+    private final BoardService boardService;
 
-    // 📄 게시글 목록 (페이징)
-    @GetMapping("/list")
-    public Map<String, Object> list(@RequestParam(defaultValue = "1") int page) {
-        int pageSize = 10;
-        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by("id").descending());
-
-        Page<Board> boardPage = boardRepository.findAll(pageable);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("list", boardPage.getContent());
-        result.put("currentPage", page);
-        result.put("totalPage", boardPage.getTotalPages());
-
-        return result;
-    }
- // 📄 게시글 상세 보기
-    @GetMapping("/detail")
-    public ResponseEntity<Board> detail(@RequestParam Long id) {
-        Optional<Board> boardOpt = boardRepository.findById(id);
-        return boardOpt.map(ResponseEntity::ok)
-                       .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // 📝 게시글 작성
     @PostMapping("/write")
-    public Map<String, String> write(@RequestBody Board dto) {
-        dto.setWriteDate(new Date());
-        boardRepository.save(dto);
-        return Collections.singletonMap("message", "글이 등록되었습니다.");
+    public ResponseEntity<?> write(@RequestBody BoardDTO dto) {
+        boardService.write(dto);
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("message", "글이 등록되었습니다.");
+        return ResponseEntity.ok(result);
     }
 
-    // ❌ 게시글 삭제
+    @GetMapping("/list/byType")
+    public ResponseEntity<?> getListByType(@RequestParam String type, @RequestParam(defaultValue = "0") int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("id").descending());
+        Page<BoardDTO> result = boardService.getListByType(type, pageable);
+
+        Map<String, Object> response = new HashMap<String, Object>();
+        response.put("list", result.getContent());
+        response.put("totalPage", result.getTotalPages());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<?> detail(@PathVariable Long id) {
+        BoardDTO board = boardService.getDetail(id);
+        return ResponseEntity.ok(board);
+    }
+    
     @DeleteMapping("/delete/{id}")
-    public Map<String, String> delete(@PathVariable Long id) {
-        boardRepository.deleteById(id);
-        return Collections.singletonMap("message", "글이 삭제되었습니다.");
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        boardService.delete(id);
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("message", "삭제되었습니다.");
+        return ResponseEntity.ok(result);
     }
 }
+

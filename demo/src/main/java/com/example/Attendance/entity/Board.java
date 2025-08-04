@@ -1,30 +1,25 @@
 package com.example.Attendance.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDateTime;
 
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@Entity
-@Table(name = "board")
+@AllArgsConstructor
+@Builder
 public class Board {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "board_seq_gen")
-    @SequenceGenerator(name = "board_seq_gen", sequenceName = "board_seq", allocationSize = 1)
-    private Long id;
-
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "board_seq")
+	@SequenceGenerator(name = "board_seq", sequenceName = "board_seq", allocationSize = 1)
+	private Long id;
     private String title;
-
     private String content;
-
     private String writer;
+    private LocalDateTime writeDate;
 
-    @Column(name = "write_date")
-    private Date writeDate;
+    @Enumerated(EnumType.STRING)
+    private BoardType boardType;
 }
