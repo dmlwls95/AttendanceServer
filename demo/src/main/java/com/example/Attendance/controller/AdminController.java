@@ -25,6 +25,7 @@ import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
 import com.example.Attendance.dto.AllUsersResponse;
 import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.dto.AttendanceUpdateRequest;
+import com.example.Attendance.dto.RegisterFormInfoRequest;
 import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.service.AdminService;
@@ -36,9 +37,9 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/admin")
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 public class AdminController {
-	private final AdminService adminService = null;
+	private final AdminService adminService;
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
 	@PostMapping("register")
@@ -123,7 +124,11 @@ public class AdminController {
 	}
 	
 	
-	
+	@GetMapping("usermanagement/forminfo")
+	public RegisterFormInfoRequest getRegisterFormInfo()
+	{
+		return adminService.getFormRegisterInfo();
+	}
 	
 
 

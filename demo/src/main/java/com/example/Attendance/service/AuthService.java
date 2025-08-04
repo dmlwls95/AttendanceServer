@@ -52,7 +52,6 @@ public class AuthService {
 	
 	public LoginResponse login(LoginRequest request)
 	{
-		
 		User user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(() -> new IllegalArgumentException("이메일이 존재하지 않습니다"));
 		

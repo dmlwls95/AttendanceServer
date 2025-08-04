@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,12 +22,20 @@ import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
 import com.example.Attendance.dto.AllUsersResponse;
 import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.dto.AttendanceUpdateRequest;
+import com.example.Attendance.dto.RegisterFormInfoRequest;
 import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.entity.Attendance;
+import com.example.Attendance.entity.Department;
+import com.example.Attendance.entity.Rank;
 import com.example.Attendance.entity.User;
+import com.example.Attendance.entity.WorkType;
 import com.example.Attendance.repository.AttendanceRepository;
+import com.example.Attendance.repository.DepartmentRepository;
+import com.example.Attendance.repository.RankRepository;
 import com.example.Attendance.repository.UserRepository;
+import com.example.Attendance.repository.WorktypesRepository;
+import com.mysql.cj.log.Log;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,9 +45,13 @@ public class AdminService {
 	
 	private final AttendanceRepository attendanceRepository;
 	private final UserRepository userRepository;
+	private final DepartmentRepository departmentRepository;
+	private final WorktypesRepository worktypeRepository;
+	private final RankRepository rankRepository;
 	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 	private final int startOfWork = 9;
 	private final int endOfWork = 18;
+	private static final Logger log = LoggerFactory.getLogger(AdminService.class);
 	
 	public List<AllUsersResponse> getAllUsers()
 	{
@@ -215,7 +229,36 @@ public class AdminService {
 				.build();
 	}
 	
-	
+	public RegisterFormInfoRequest getFormRegisterInfo()
+	{
+		List<WorkType> workdata = worktypeRepository.findAll();
+		List<Department> deptdata = departmentRepository.findAll();
+		List<Rank> rankdata = rankRepository.findAll();
+		List<String> workstr = new ArrayList<String>();
+		List<String> deptstr = new ArrayList<String>();
+		List<String> rankstr = new ArrayList<String>();
+		
+		workdata.forEach(data -> {
+			workstr.add(data.getWorktypename());
+		});
+		deptdata.forEach(data -> {
+			deptstr.add(data.getDeptname());
+		});
+		rankdata.forEach(data -> {
+			rankstr.add(data.getRankname());
+		});
+		
+		
+		
+		RegisterFormInfoRequest info = RegisterFormInfoRequest.builder()
+				.depts(deptstr)
+				.ranks(rankstr)
+				.worktypes(workstr)
+				.build();
+		
+		return info;
+		
+	}
 	
 
 }
