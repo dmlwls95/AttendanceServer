@@ -18,3 +18,7 @@ INSERT INTO worktypes (worktypeid, worktypename) VALUES (1, '정규직');
 INSERT INTO worktypes (worktypeid, worktypename) VALUES (2, '계약직');
 INSERT INTO worktypes (worktypeid, worktypename) VALUES (3, '프리랜서');
 INSERT INTO worktypes (worktypeid, worktypename) VALUES (4, '인턴');
+
+--pw user123
+INSERT INTO "USERS" (id, work_name, email, password, role, rankid, worktypeid, deptid)
+VALUES (USER_SEQ.NEXTVAL, '테스터', 'user@aaa.com', '$2a$10$i4RvLbeZk/bxEFA8NXk9YunSIwJi5mVwhsHQ.qtT7gakz.Xvmj5/W', 'USER', 1, 1, 1);
