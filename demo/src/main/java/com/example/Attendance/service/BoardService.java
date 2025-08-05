@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+import javax.transaction.Transactional;
+
 @Service
 @RequiredArgsConstructor
 public class BoardService {
@@ -54,7 +56,8 @@ public class BoardService {
             .orElse(null);
     }
 
+    @Transactional
     public void delete(Long id) {
-        boardRepository.deleteById(id);
+        boardRepository.deleteById(id);   // cascade REMOVE 발동
     }
 }

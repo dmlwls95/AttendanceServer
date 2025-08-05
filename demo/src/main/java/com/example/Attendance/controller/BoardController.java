@@ -27,7 +27,6 @@ public class BoardController {
         result.put("message", "글이 등록되었습니다.");
         return ResponseEntity.ok(result);
     }
-
     @GetMapping("/list/byType")
     public ResponseEntity<?> getListByType(@RequestParam String type, @RequestParam(defaultValue = "0") int page) {
         Pageable pageable = PageRequest.of(page, 10, Sort.by("id").descending());
