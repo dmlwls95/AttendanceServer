@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +28,7 @@ import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.dto.AttendanceUpdateRequest;
 import com.example.Attendance.dto.RegisterFormInfoRequest;
 import com.example.Attendance.dto.RegisterRequest;
+import com.example.Attendance.dto.RegisterResponse;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.service.AdminService;
 
@@ -42,11 +44,7 @@ public class AdminController {
 	private final AdminService adminService;
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
-	@PostMapping("register")
-	public UserResponse register(@RequestBody RegisterRequest request)
-	{
-		return adminService.register(request);
-	}
+
 	
 	@Operation(summary = "모든 유저의 이메일 및 이름 조회")
 	@GetMapping("getallusers")
@@ -130,6 +128,13 @@ public class AdminController {
 		return adminService.getFormRegisterInfo();
 	}
 	
+	@PostMapping("usermanagement/signup")
+	public RegisterResponse RegisterUser(
+				@ModelAttribute RegisterRequest request
+			)
+	{
+		return adminService.RegisterUser(request);
+	}
 
 
 }

@@ -1,5 +1,7 @@
 package com.example.Attendance.service;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
 import com.example.Attendance.dto.AllUsersResponse;
@@ -24,11 +27,13 @@ import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.dto.AttendanceUpdateRequest;
 import com.example.Attendance.dto.RegisterFormInfoRequest;
 import com.example.Attendance.dto.RegisterRequest;
+import com.example.Attendance.dto.RegisterResponse;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.entity.Attendance;
 import com.example.Attendance.entity.Department;
 import com.example.Attendance.entity.Rank;
 import com.example.Attendance.entity.User;
+import com.example.Attendance.entity.User.Role;
 import com.example.Attendance.entity.WorkType;
 import com.example.Attendance.repository.AttendanceRepository;
 import com.example.Attendance.repository.DepartmentRepository;
@@ -208,26 +213,6 @@ public class AdminService {
 		return result.toString();
 	}
 	
-	public UserResponse register(RegisterRequest request)
-	{
-		if(userRepository.existsByEmail(request.getEmail()))
-		{
-			throw new IllegalArgumentException("이미 존재하는 이메일 입니다");
-		}
-		
-		User user = User.builder()
-				.email(request.getEmail())
-				.password(passwordEncoder.encode(request.getPassword()))
-				.name(request.getName())
-				.role(request.getRole())
-				.build();
-		userRepository.save(user);
-		return UserResponse.builder()
-				.id(user.getId())
-				.name(user.getName())
-				.email(user.getEmail())
-				.build();
-	}
 	
 	public RegisterFormInfoRequest getFormRegisterInfo()
 	{
@@ -258,6 +243,66 @@ public class AdminService {
 		
 		return info;
 		
+	}
+	
+	public RegisterResponse RegisterUser(RegisterRequest request)
+	{
+		if(userRepository.existsByEmail(request.getEmail()))
+		{
+			return RegisterResponse.builder()
+					.success(false)
+					.message("이미 존재하는 이메일 입니다.")
+					.build();
+		}
+		
+		MultipartFile file = request.getProfileImage();
+		String filename = request.getEmpnum() + request.getWork_name() + ".png";
+		try {
+			
+			String uploadDir = System.getProperty("user.dir") + "/src/uploads/profileimages/";
+			File destination = new File(uploadDir + filename);
+			file.transferTo(destination);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			return RegisterResponse.builder()
+					.success(false)
+					.message("프로필 사진에 문제가 있습니다.")
+					.build();
+
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		
+		Role role = null;
+		if(request.getRole().toUpperCase().equals("ADMIN")) {
+			role = Role.ADMIN;
+		}else {
+			role = Role.USER;
+		}
+		
+		User user = User.builder()
+				.empnum(request.getEmpnum())
+				.email(request.getEmail())
+				.password(passwordEncoder.encode(request.getPassword()))
+				.name(request.getWork_name())
+				.role(role)
+				.worktype(worktypeRepository.findByWorktypename(request.getWorktype()))
+				.dept(departmentRepository.findByDeptname(request.getDept()))
+				.rank(rankRepository.findByRankname(request.getRank()))
+				.profileImageUrl(filename)
+				.build();
+		userRepository.save(user);
+		
+		
+		
+		
+		
+		return RegisterResponse.builder()
+				.success(true)
+				.message("성공적으로 회원가입을 완료했습니다.")
+				.build();
 	}
 	
 

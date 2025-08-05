@@ -20,6 +20,9 @@ public class User {
 	@SequenceGenerator(name = "user_seq", sequenceName = "USER_SEQ", allocationSize = 1)
 	private Long id;
 	
+	@Column(unique = true, nullable=false)
+	private String empnum;
+	
 	@Column(nullable = false, name = "work_name")
 	private String name;
 	
@@ -49,6 +52,9 @@ public class User {
 	@ManyToOne
 	@JoinColumn(name= "deptid")
 	private Department dept;
+	
+	
+	private String profileImageUrl;
 	
 
 }

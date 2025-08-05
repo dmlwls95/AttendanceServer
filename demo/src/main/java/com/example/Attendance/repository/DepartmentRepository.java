@@ -8,4 +8,5 @@ import com.example.Attendance.entity.Department;
 
 public interface DepartmentRepository extends JpaRepository<Department, Long>{
 	List<Department> findAll();
+	Department findByDeptname(String deptname);
 }

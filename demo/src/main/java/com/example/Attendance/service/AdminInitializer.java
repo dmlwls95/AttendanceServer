@@ -22,6 +22,7 @@ public class AdminInitializer implements CommandLineRunner {
 		if(!userRepository.existsByEmail(adminEmail))
 		{
 			User admin = User.builder()
+					.empnum(adminEmail)
 					.email(adminEmail)
 					.name("admin")
 					.password(passwordEncoder.encode("q1w2e3r4"))

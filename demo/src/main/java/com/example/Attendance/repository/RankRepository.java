@@ -9,5 +9,5 @@ import com.example.Attendance.entity.Rank;
 
 public interface RankRepository extends JpaRepository<Rank, Long>{
 	List<Rank> findAll();
-
+	Rank findByRankname(String workname);
 }

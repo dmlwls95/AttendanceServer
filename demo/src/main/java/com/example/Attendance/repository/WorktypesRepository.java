@@ -9,4 +9,5 @@ import com.example.Attendance.entity.WorkType;
 
 public interface WorktypesRepository extends JpaRepository<WorkType, Long>{
 	List<WorkType> findAll();
+	WorkType findByWorktypename(String worktypename);
 }

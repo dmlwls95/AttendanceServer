@@ -1,5 +1,7 @@
 package com.example.Attendance.dto;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.Attendance.entity.User.Role;
 
 import lombok.AllArgsConstructor;
@@ -12,8 +14,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterRequest {
+	private String empnum;
 	private String email;
-	private String name;
+	private String work_name;
 	private String password;
-	private Role role;
+	private String role;
+	private String dept;
+	private String rank;
+	private String worktype;
+	private MultipartFile profileImage;
 }
