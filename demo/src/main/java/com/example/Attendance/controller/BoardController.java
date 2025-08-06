@@ -1,6 +1,7 @@
 package com.example.Attendance.controller;
 
 import com.example.Attendance.dto.BoardDTO;
+import com.example.Attendance.dto.BoardUpdateDTO;
 import com.example.Attendance.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,8 +11,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/admin/board")
@@ -43,6 +47,17 @@ public class BoardController {
         BoardDTO board = boardService.getDetail(id);
         return ResponseEntity.ok(board);
     }
+    /* 게시글 수정 */
+    @PutMapping("/edit/{id}/{type}")
+    public ResponseEntity<?> editBoard(
+            @PathVariable Long id,
+            @PathVariable String type,    // 필요 없다면 제거 가능
+            @RequestBody @Valid BoardUpdateDTO dto) {
+
+        boardService.updateBoard(id, dto);
+        Map<String, String> body = Collections.singletonMap("message", "게시글이 수정되었습니다.");
+        return ResponseEntity.ok(body);
+        }
     
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
