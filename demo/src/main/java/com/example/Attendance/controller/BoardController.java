@@ -19,20 +19,24 @@ import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/admin/board")
-@RequiredArgsConstructor
 public class BoardController {
 
     private final BoardService boardService;
+    
+    public BoardController(BoardService boardService) {
+        this.boardService = boardService;
+    }
 
     @PostMapping("/write")
-    public ResponseEntity<?> write(@RequestBody BoardDTO dto) {
+    public ResponseEntity<Map<String,String>> write(@RequestBody BoardDTO dto) {
         boardService.write(dto);
         Map<String, String> result = new HashMap<String, String>();
         result.put("message", "글이 등록되었습니다.");
         return ResponseEntity.ok(result);
     }
+    
     @GetMapping("/list/byType")
-    public ResponseEntity<?> getListByType(@RequestParam String type, @RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<Map<String,Object>> getListByType(@RequestParam String type, @RequestParam(defaultValue = "0") int page) {
         Pageable pageable = PageRequest.of(page, 10, Sort.by("id").descending());
         Page<BoardDTO> result = boardService.getListByType(type, pageable);
 
