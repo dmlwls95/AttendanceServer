@@ -6,5 +6,4 @@ import java.lang.*;
 import com.example.Attendance.entity.Notification;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long>{
-	List<Notification> findAllBynotiId(Long notiId);
 }
