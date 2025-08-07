@@ -20,5 +20,7 @@ INSERT INTO worktypes (worktypeid, worktypename) VALUES (3, '프리랜서');
 INSERT INTO worktypes (worktypeid, worktypename) VALUES (4, '인턴');
 
 --pw user123
-INSERT INTO "USERS" (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid)
-VALUES (USER_SEQ.NEXTVAL,'a123456789' , '테스터', 'user@aaa.com', '$2a$10$i4RvLbeZk/bxEFA8NXk9YunSIwJi5mVwhsHQ.qtT7gakz.Xvmj5/W', 'USER', 1, 1, 1);
+INSERT INTO "USERS" (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileImageUrl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL,'a00000000' , '관리자', 'admin@admin.com', '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'ADMIN', 6, 1, 5, 'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '09:00', '18:00');
+INSERT INTO "USERS" (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileImageUrl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL,'a123456789' , '테스터', 'user@aaa.com', '$2a$10$i4RvLbeZk/bxEFA8NXk9YunSIwJi5mVwhsHQ.qtT7gakz.Xvmj5/W', 'USER', 1, 1, 1, 'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '09:00', '18:00');

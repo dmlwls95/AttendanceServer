@@ -83,14 +83,15 @@ public class AuthService {
 				.orElseThrow(() -> new IllegalArgumentException("이메일이 존재하지 않습니다"));
 		
 		
-		String filename = user.getEmpnum() + user.getName() + ".png";
+		//String filename = user.getEmpnum() + user.getName() + ".png";
 		try {
-			String imageUrl = "http://" + this.ip + ":" + this.port + "/profile/image/"  + URLEncoder.encode(filename, "UTF-8");
+			//String imageUrl = "http://" + this.ip + ":" + this.port + "/profile/image/"  + URLEncoder.encode(filename, "UTF-8");
 			return NavDataResponse.builder()
 					.name(user.getName())
 					.empno(user.getEmpnum())
 					.rank(user.getRank().getRankname())
-					.profileUrl(imageUrl)
+					.profileUrl(user.getProfileImageUrl())
+					.role(user.getRole().toString())
 					.build();
 		} catch (Exception e) {
 			// TODO: handle exception

@@ -15,4 +15,5 @@ public class NavDataResponse {
 	private String empno;
 	private String rank;
 	private String profileUrl;
+	private String role;
 }

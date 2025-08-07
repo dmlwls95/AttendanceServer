@@ -10,15 +10,15 @@ import com.example.Attendance.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class AdminInitializer implements CommandLineRunner {
-	private final UserRepository userRepository;
+	//private final UserRepository userRepository;
 	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 	
 	@Override
 	public void run(String... args)
 	{
-		String adminEmail = "admin@admin.com";
+		/*String adminEmail = "admin@admin.com";
 		if(!userRepository.existsByEmail(adminEmail))
 		{
 			User admin = User.builder()
@@ -32,7 +32,7 @@ public class AdminInitializer implements CommandLineRunner {
 			userRepository.save(admin);
 			System.out.println("✅ 초기 관리자 계정 생성됨: " + adminEmail + " / q1w2e3r4");
         
-		}
+		}*/
 	}
 
 }

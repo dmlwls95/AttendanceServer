@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -282,6 +283,9 @@ public class AdminService {
 			role = Role.USER;
 		}
 		
+		LocalTime start = request.getWorkstarttime() == null ? null : LocalTime.parse(request.getWorkstarttime());
+		LocalTime end = request.getWorkendtime() == null ? null : LocalTime.parse(request.getWorkendtime());
+		
 		User user = User.builder()
 				.empnum(request.getEmpnum())
 				.email(request.getEmail())
@@ -292,6 +296,8 @@ public class AdminService {
 				.dept(departmentRepository.findByDeptname(request.getDept()))
 				.rank(rankRepository.findByRankname(request.getRank()))
 				.profileImageUrl(filename)
+				.workStartTime(start)
+				.workEndTime(end)
 				.build();
 		userRepository.save(user);
 		

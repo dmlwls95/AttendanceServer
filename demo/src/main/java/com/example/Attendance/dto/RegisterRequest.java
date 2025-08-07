@@ -23,4 +23,6 @@ public class RegisterRequest {
 	private String rank;
 	private String worktype;
 	private MultipartFile profileImage;
+	private String workstarttime;
+	private String workendtime;
 }
