@@ -9,6 +9,7 @@ import com.example.Attendance.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Long>{
 	Optional<User> findByEmail(String email);
+	Optional<User>	findByEmpnum(String empnum);
 	boolean existsByEmail(String email);
 	boolean existsByEmpnum(String empnum);
 	List<User> findAll();

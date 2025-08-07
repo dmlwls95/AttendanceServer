@@ -30,6 +30,7 @@ import com.example.Attendance.dto.RegisterFormInfoRequest;
 import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.RegisterResponse;
 import com.example.Attendance.dto.UserResponse;
+import com.example.Attendance.dto.UserdataResponse;
 import com.example.Attendance.service.AdminService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -135,6 +136,22 @@ public class AdminController {
 	{
 		return adminService.RegisterUser(request);
 	}
+	
+	@GetMapping("usermanagement/checkuser")
+	public UserdataResponse getUserdata(
+				@RequestParam String empno
+			)
+	{
+		return adminService.findAndGetUserData(empno);
+	}
+	
+	@PutMapping("usermanagement/userupdate")
+	public RegisterResponse UpdateUser(
+				@ModelAttribute RegisterRequest request
+			) {
+		return adminService.UpdateUser(request);
+	}
+	
 
 
 }
