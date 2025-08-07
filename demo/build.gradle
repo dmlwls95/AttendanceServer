@@ -23,6 +23,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-devtools'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.15' // Java 8 호환 최종 버전
     implementation 'com.oracle.database.jdbc:ojdbc8:12.2.0.1'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'

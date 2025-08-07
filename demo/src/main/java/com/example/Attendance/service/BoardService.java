@@ -1,6 +1,7 @@
 package com.example.Attendance.service;
 
 import com.example.Attendance.dto.BoardDTO;
+import com.example.Attendance.dto.BoardUpdateDTO;
 import com.example.Attendance.entity.Board;
 import com.example.Attendance.entity.BoardType;
 import com.example.Attendance.repository.BoardRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 
 @Service
@@ -54,6 +56,16 @@ public class BoardService {
                 .boardType(board.getBoardType()) // BoardType 그대로
                 .build())
             .orElse(null);
+    }
+
+    /* 게시글 수정 */
+    @Transactional
+    public void updateBoard(Long id, BoardUpdateDTO dto) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + id));
+
+        board.setTitle(dto.getTitle());
+        board.setContent(dto.getContent());
     }
 
     @Transactional
