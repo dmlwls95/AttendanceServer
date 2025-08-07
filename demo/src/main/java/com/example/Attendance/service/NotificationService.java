@@ -43,11 +43,13 @@ public class NotificationService {
 		notificationRepository.save(noti);
 		
 		// User 정보 가져와서 List에 저장
-		List<User> users = userRepository.findAll();
+		List<User> user_List = userRepository.findAll();
+		
+		List<NotificationStatus> notiStatus_List = new ArrayList<NotificationStatus>();
 		
 		// 각 User마다 알람을 관리하기 위해서
 		// NotificationStatus 정보를 user 마다 저장
-		for(User user : users) {
+		for(User user : user_List) {
 			NotificationStatus notiStatus = new NotificationStatus();
 			
 			// NotificationStatus에 알림, user, 읽음 여부(default false) 저장
@@ -55,7 +57,10 @@ public class NotificationService {
 			notiStatus.setUser(user);
 			notiStatus.setIsRead(false);
 			
-			notificationstatusRepository.save(notiStatus);
+			// List에 담아서 DB에 한번에 저장 -> 성능 향상
+			notiStatus_List.add(notiStatus);
+			
+			notificationstatusRepository.saveAll(notiStatus_List);
 		}
 		
 		return noti;
@@ -69,12 +74,12 @@ public class NotificationService {
 		dto.setTitle(noti.getBoard().getTitle());
 		dto.setWriteDate(noti.getBoard().getWriteDate().format(format));
 		
-		List<User> users = userRepository.findAll();
+		List<User> user_List = userRepository.findAll();
 		
-		for(User user : users) {
+		for(User user : user_List) {
 			messagingTemplate.convertAndSendToUser(
 					String.valueOf(user.getId()), 
-					"queue/notification", 
+					"/queue/notification", 
 					dto);
 		}
 	}
