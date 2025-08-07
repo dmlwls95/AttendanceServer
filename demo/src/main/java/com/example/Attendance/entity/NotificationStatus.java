@@ -1,15 +1,17 @@
 package com.example.Attendance.entity;
 
-
 import javax.persistence.*;
 
 import lombok.*;
 
 @Entity
-@NoArgsConstructor
 
 @Getter
 @Setter
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 
 @Table(name = "notistatus")
 public class NotificationStatus {
