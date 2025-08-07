@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- 
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  -->
+<mapper namespace="com.example.Attendance.repository.WorkStatusMapper">
+
+
+  <!-- 주간 근무 시간 조회 -->
+  <select id="getWeeklyWorkSummary" resultType="com.example.Attendance.dto.WorkSummaryDTO">
+    SELECT 
+      userid,
+      workdate,
+      dayofweek,
+      workinghours,
+      extendhours,
+      totalhours,
+      workstatus,
+      arrivaltime
+    FROM WEEKLY_SUMMARY
+    WHERE userid = #{userid}
+      AND workdate BETWEEN #{start} AND #{end}
+  </select>
+
+  <!-- 주간 출결 상태 조회 -->
+  <select id="getWeeklyAttendStatus" resultType="com.example.Attendance.dto.AttendStatusDTO">
+    SELECT 
+      userid,
+      workdate,
+      attendstatus,
+      arrivaltime
+    FROM WEEKLY_ATTENDSTATUS
+    WHERE userid = #{userid}
+      AND workdate BETWEEN #{start} AND #{end}
+  </select>
+
+</mapper>
