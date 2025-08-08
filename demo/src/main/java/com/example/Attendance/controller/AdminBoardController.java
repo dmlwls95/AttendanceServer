@@ -18,12 +18,12 @@ import java.util.Map;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("/admin/board")
-public class BoardController {
+@RequestMapping("/admin/adminboard")
+public class AdminBoardController {
 
     private final BoardService boardService;
     
-    public BoardController(BoardService boardService) {
+    public AdminBoardController(BoardService boardService) {
         this.boardService = boardService;
     }
 
