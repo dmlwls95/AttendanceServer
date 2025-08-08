@@ -19,6 +19,7 @@ public class AttendanceResponse {
 	private String email;
 	@Nullable
 	private String name;
+	private String empno;
 	private LocalDate date;
 	private LocalDateTime clockIn;
 	private LocalDateTime clockOut;
