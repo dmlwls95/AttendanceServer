@@ -482,6 +482,9 @@ public class AdminService {
 				.clockOut(att.getClockOut())
 				.isLate(att.getIsLate())
 				.isLeftEarly(att.getIsLeftEarly())
+				.isAbsence(att.getIsAbsence())
+				.outStart(att.getOutStart())
+				.outEnd(att.getOutEnd())
 				.totalHours(att.getTotalHours())
 				.build();
 	}

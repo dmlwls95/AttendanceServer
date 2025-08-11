@@ -25,6 +25,9 @@ public class AttendanceResponse {
 	private LocalDateTime clockOut;
 	private int isLate;
 	private int isLeftEarly;
+	private int isAbsence;
+	private LocalDateTime outStart;
+	private LocalDateTime outEnd;
 	private Double totalHours;
 
 }
