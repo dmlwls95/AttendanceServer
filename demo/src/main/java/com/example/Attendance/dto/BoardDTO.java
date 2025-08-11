@@ -17,4 +17,5 @@ public class BoardDTO {
     private String writer;
     private LocalDateTime writeDate = LocalDateTime.now();
     private BoardType boardType; // "FREE", "NOTICE", "SUGGEST"
+    private int recommendCount;
 }

@@ -22,40 +22,20 @@ public class BoardService {
     private final BoardRepository boardRepository;
 
     public void write(BoardDTO dto) {
-        Board entity = Board.builder()
-            .title(dto.getTitle())
-            .content(dto.getContent())
-            .writer(dto.getWriter())
-            .writeDate(dto.getWriteDate() != null ? dto.getWriteDate() : LocalDateTime.now())
-            .boardType(dto.getBoardType()) // BoardType 직접 사용
-            .build();
+        Board entity = toEntity(dto);
         boardRepository.save(entity);
     }
 
     public Page<BoardDTO> getListByType(String type, Pageable pageable) {
         BoardType boardType = BoardType.valueOf(type.toUpperCase());
         return boardRepository.findByBoardType(boardType, pageable)
-            .map(board -> BoardDTO.builder()
-                .id(board.getId())
-                .title(board.getTitle())
-                .content(board.getContent())
-                .writer(board.getWriter())
-                .writeDate(board.getWriteDate())
-                .boardType(board.getBoardType()) // BoardType 그대로
-                .build());
+                              .map(this::toDTO);   // ✅ 공통 매핑 사용
     }
 
     public BoardDTO getDetail(Long id) {
         return boardRepository.findById(id)
-            .map(board -> BoardDTO.builder()
-                .id(board.getId())
-                .title(board.getTitle())
-                .content(board.getContent())
-                .writer(board.getWriter())
-                .writeDate(board.getWriteDate())
-                .boardType(board.getBoardType()) // BoardType 그대로
-                .build())
-            .orElse(null);
+                              .map(this::toDTO)    // ✅ 공통 매핑 사용
+                              .orElse(null);
     }
 
     /* 게시글 수정 */
@@ -63,13 +43,47 @@ public class BoardService {
     public void updateBoard(Long id, BoardUpdateDTO dto) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + id));
-
         board.setTitle(dto.getTitle());
         board.setContent(dto.getContent());
     }
 
     @Transactional
     public void delete(Long id) {
-        boardRepository.deleteById(id);   // cascade REMOVE 발동
+        boardRepository.deleteById(id);
+    }
+
+    /* 추천 +1 후 카운트 반환 */
+    @Transactional
+    public int recommend(Long id) {
+        int updated = boardRepository.incrementRecommend(id);
+        if (updated == 0) {
+            throw new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + id);
+        }
+        Integer cnt = boardRepository.getRecommendCount(id);
+        return cnt != null ? cnt : 0;
+    }
+
+    /* ── 공통 매핑 ── */
+    private BoardDTO toDTO(Board board) {
+        return BoardDTO.builder()
+                .id(board.getId())
+                .title(board.getTitle())
+                .content(board.getContent())
+                .writer(board.getWriter())
+                .writeDate(board.getWriteDate())
+                .boardType(board.getBoardType())
+                .recommendCount(board.getRecommendCount()) // 추천수 포함
+                .build();
+    }
+
+    private Board toEntity(BoardDTO dto) {
+        return Board.builder()
+                .title(dto.getTitle())
+                .content(dto.getContent())
+                .writer(dto.getWriter())
+                .writeDate(dto.getWriteDate() != null ? dto.getWriteDate() : LocalDateTime.now())
+                .boardType(dto.getBoardType())   // DTO가 BoardType을 직접 들고있는 전제
+                // recommendCount는 DB DEFAULT 0이면 생략
+                .build();
     }
 }

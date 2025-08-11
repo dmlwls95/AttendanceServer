@@ -70,5 +70,14 @@ public class AdminBoardController {
         result.put("message", "삭제되었습니다.");
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/recommend/{id}")
+    public ResponseEntity<Map<String,Object>> recommend(@PathVariable Long id) {
+        int count = boardService.recommend(id);
+        Map<String,Object> body = new HashMap<>();
+        body.put("count", count);
+        return ResponseEntity.ok(body);
+    }
+    
 }
 
