@@ -14,7 +14,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/work")
-@CrossOrigin(origins = "*") //리액트에서 호출하기위해 임시 허용
+@CrossOrigin(
+  origins = {"http://localhost:5173", "http://localhost:5174"},
+  allowCredentials = "true"
+) //리액트에서 호출하기위해 임시 허용
 public class WorkStatusController {
 	
 	private final WorkStatusService service;
@@ -26,20 +29,18 @@ public class WorkStatusController {
 // 주간 근무 요약
 @GetMapping("/weekly/summary")
 public List<WorkSummaryDTO> getWeeklySummary(
-		@RequestParam String userid,
-		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
-		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end){
-	
-	return service.getWeeklyWorkSummary(userid, Date.valueOf(start), Date.valueOf(end));
+	       @RequestParam String userid,
+	       @RequestParam String start,
+	       @RequestParam String end) {
+	    return service.getWeeklyWorkSummary(userid, start, end);
 	}
 
 // 주간 출결 상태
 @GetMapping("/weekly/attendance")
 public List<AttendStatusDTO> getWeeklyAttendance(
-		@RequestParam String userid,
-		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
-		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end){
-	
-	return service.getWeeklyAttendStatus(userid, Date.valueOf(start), Date.valueOf(end));
+			@RequestParam String userid,
+			@RequestParam String start,
+			@RequestParam String end) {
+    		return service.getWeeklyAttendStatus(userid, start, end);
 	}
 }

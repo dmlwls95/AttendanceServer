@@ -17,11 +17,11 @@ public class WorkStatusService {
 		this.workStatusMapper = workStatusMapper;
 	}
 	
-	public List<WorkSummaryDTO> getWeeklyWorkSummary(String userid, Date start, Date end) {
+	public List<WorkSummaryDTO> getWeeklyWorkSummary(String userid, String start, String end) {
 		return workStatusMapper.getWeeklyWorkSummary(userid, start, end);
 	}
 	
-	public List<AttendStatusDTO> getWeeklyAttendStatus(String userid, Date start, Date end){
+	public List<AttendStatusDTO> getWeeklyAttendStatus(String userid, String start, String end){
 		return workStatusMapper.getWeeklyAttendStatus(userid, start, end);
 	}
 }
