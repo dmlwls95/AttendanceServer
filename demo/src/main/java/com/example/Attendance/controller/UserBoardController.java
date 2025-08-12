@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
@@ -77,6 +78,12 @@ public class UserBoardController {
         Map<String,Object> body = new HashMap<>();
         body.put("count", count);
         return ResponseEntity.ok(body);
+    }
+    
+    @GetMapping("/recenttop")
+    public List<BoardDTO> getRecentTopBoard()
+    {
+    	return boardService.getTop10Board();
     }
 }
 

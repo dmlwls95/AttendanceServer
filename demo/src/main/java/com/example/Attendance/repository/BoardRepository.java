@@ -3,6 +3,7 @@ package com.example.Attendance.repository;
 import com.example.Attendance.entity.Board;
 import com.example.Attendance.entity.BoardType;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -25,4 +26,5 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query("select b.recommendCount from Board b where b.id = :id")
     Integer getRecommendCount(@Param("id") Long id);
     
+    List<Board> findTop10ByOrderByRecommendCountDesc();
 }

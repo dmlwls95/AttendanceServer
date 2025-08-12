@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
@@ -85,5 +87,11 @@ public class BoardService {
                 .boardType(dto.getBoardType())   // DTO가 BoardType을 직접 들고있는 전제
                 // recommendCount는 DB DEFAULT 0이면 생략
                 .build();
+    }
+    
+    /* ── 인기글 반환 ── */
+    public List<BoardDTO> getTop10Board(){
+    	List<Board> boardList = boardRepository.findTop10ByOrderByRecommendCountDesc();
+    	return boardList.stream().map(board ->  toDTO(board)).collect(Collectors.toList());
     }
 }
