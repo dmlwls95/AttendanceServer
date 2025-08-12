@@ -18,12 +18,12 @@ import java.util.Map;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("/admin/board")
-public class BoardController {
+@RequestMapping("/admin/adminboard")
+public class AdminBoardController {
 
     private final BoardService boardService;
     
-    public BoardController(BoardService boardService) {
+    public AdminBoardController(BoardService boardService) {
         this.boardService = boardService;
     }
 
@@ -70,5 +70,14 @@ public class BoardController {
         result.put("message", "삭제되었습니다.");
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/recommend/{id}")
+    public ResponseEntity<Map<String,Object>> recommend(@PathVariable Long id) {
+        int count = boardService.recommend(id);
+        Map<String,Object> body = new HashMap<>();
+        body.put("count", count);
+        return ResponseEntity.ok(body);
+    }
+    
 }
 

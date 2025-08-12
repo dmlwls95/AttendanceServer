@@ -17,9 +17,14 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.Attendance.Util.LocaldateParser;
@@ -392,6 +397,24 @@ public class AdminService {
 				.build();
 	}
 	
+	@Transactional
+	public RegisterResponse DeleteUserByempno(String empno)
+	{
+		if(!userRepository.existsByEmpnum(empno))
+		{
+			return RegisterResponse.builder()
+					.success(false)
+					.message("존재하지 않는 사원입니다.")
+					.build();
+		}
+		userRepository.deleteByEmpnum(empno);
+		
+		return RegisterResponse.builder()
+				.success(true)
+				.message("삭제 완료")
+				.build();
+	}
+	
 	public UserdataResponse findAndGetUserData(String empno)
 	{
 		if(!userRepository.existsByEmpnum(empno))
@@ -414,6 +437,55 @@ public class AdminService {
 				.hiredate(usr.getHiredate())
 				.workStartTime(usr.getWorkStartTime())
 				.workEndTime(usr.getWorkEndTime())
+				.build();
+	}
+	
+	public Page<UserdataResponse> getUsersPagination(int page, int size, String sortBy, String direction)
+	{
+		Sort sort = "desc".equalsIgnoreCase(direction)
+				? Sort.by(sortBy).descending()
+				: Sort.by(sortBy).ascending();
+		
+		Pageable pageable = PageRequest.of(page, size, sort);
+		
+		
+		Page<User> users = userRepository.findAll(pageable);
+		
+		return users.map(user -> new UserdataResponse(
+					user.getEmpnum(),
+					user.getName(),
+					user.getEmail(),
+					user.getRole().name(),
+					user.getRank().getRankname(),
+					user.getWorktype().getWorktypename(),
+					user.getDept().getDeptname(),
+					user.getProfileImageUrl(),
+					user.getHiredate(),
+					user.getWorkStartTime(),
+					user.getWorkEndTime()
+				));
+	}
+	
+	public AttendanceResponse findAttendanceByDate(String empno, LocalDate adate)
+	{
+		User user = userRepository.findByEmpnum(empno)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사원입니다."));
+		Attendance att = attendanceRepository.findByUserAndDate(user, adate)
+				.orElseThrow(() -> new IllegalArgumentException("해당 날짜의 데이터가 없습니다."));
+		
+		return AttendanceResponse.builder()
+				.id(att.getId())
+				.email(user.getEmail())
+				.empno(user.getEmpnum())
+				.date(att.getDate())
+				.clockIn(att.getClockIn())
+				.clockOut(att.getClockOut())
+				.isLate(att.getIsLate())
+				.isLeftEarly(att.getIsLeftEarly())
+				.isAbsence(att.getIsAbsence())
+				.outStart(att.getOutStart())
+				.outEnd(att.getOutEnd())
+				.totalHours(att.getTotalHours())
 				.build();
 	}
 	

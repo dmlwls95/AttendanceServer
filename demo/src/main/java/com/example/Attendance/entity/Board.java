@@ -17,7 +17,10 @@ public class Board {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "board_seq")
     @SequenceGenerator(name = "board_seq", sequenceName = "board_seq", allocationSize = 1)
     private Long id;
-
+    
+    @Column(name = "recommend_count", nullable = false)
+    private int recommendCount;
+    
     private String title;
     private String content;
     private String writer;
@@ -31,4 +34,8 @@ public class Board {
                cascade = CascadeType.ALL,   // Board 삭제 → 댓글 자동 삭제
                orphanRemoval = true)        // 컬렉션에서 빠진 댓글도 삭제
     private List<Comment> comments = new ArrayList<>();
+    
+    /*------------추천 컬렉션-----------*/
+    public int getRecommendCount() { return recommendCount; }
+    public void setRecommendCount(int recommendCount) { this.recommendCount = recommendCount; }
 }

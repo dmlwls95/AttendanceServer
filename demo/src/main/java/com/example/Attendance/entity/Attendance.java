@@ -43,5 +43,15 @@ public class Attendance {
     @Column(name = "is_left_early")
     @Builder.Default
     private Integer isLeftEarly = 0;
+    
+    @Column(name = "absence")
+    @Builder.Default
+    private Integer isAbsence = 0;
+    
+    @Column(name = "out_start")
+    private LocalDateTime outStart;
+    
+    @Column(name = "out_end")
+    private LocalDateTime outEnd;
 }
 

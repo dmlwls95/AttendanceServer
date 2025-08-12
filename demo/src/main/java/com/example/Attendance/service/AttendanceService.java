@@ -1,15 +1,25 @@
 package com.example.Attendance.service;
 
 import com.example.Attendance.controller.*;
+import com.example.Attendance.dto.AttendanceEventResponse;
 import com.example.Attendance.dto.AttendanceMonthlyResponse;
 import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.entity.Attendance;
+import com.example.Attendance.entity.AttendanceEvent;
 import com.example.Attendance.entity.User;
+import com.example.Attendance.repository.AttendanceEventRepository;
 import com.example.Attendance.repository.AttendanceRepository;
 import com.example.Attendance.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -29,6 +39,7 @@ public class AttendanceService {
     //private final AttendanceController attendanceController;
 	
 	private final AttendanceRepository attendanceRepository;
+	private final AttendanceEventRepository attendanceEventRepository;
 	private final UserRepository userRepository;
 	
 	private final int startOfWork = 9;
@@ -221,6 +232,19 @@ public class AttendanceService {
 			return true;
 		}
 		return false;
+	}
+	
+	
+	public List<AttendanceEventResponse> getRecentAttendance(String email ,int howmany)
+	{
+		User user = userRepository.findByEmail(email)
+		.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사원 입니다"));
+		Pageable pageable = PageRequest.of(0, howmany, Sort.by(Sort.Direction.DESC, "occurredAt"));
+		
+		
+		return attendanceEventRepository.findByUser(user, pageable).stream().map(AttendanceEventResponse::from).collect(Collectors.toList());
+		
+
 	}
 
 	

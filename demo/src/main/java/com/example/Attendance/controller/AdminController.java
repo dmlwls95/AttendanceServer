@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -150,6 +152,32 @@ public class AdminController {
 				@ModelAttribute RegisterRequest request
 			) {
 		return adminService.UpdateUser(request);
+	}
+	
+	@DeleteMapping("usermanagement/userdelete")
+	public RegisterResponse DeleteUser(
+				@RequestParam String empnum
+			)
+	{
+		return adminService.DeleteUserByempno(empnum);
+	}
+	
+	@GetMapping("usermanagement/userlist")
+	public Page<UserdataResponse> list(
+				@RequestParam(defaultValue = "0") int page,
+				@RequestParam(defaultValue = "10") int size,
+				@RequestParam(defaultValue = "hiredate") String sortBy,
+				@RequestParam(defaultValue = "desc") String direction
+			){
+		return adminService.getUsersPagination(page, size, sortBy, direction);
+	}
+	
+	@GetMapping("usermanagement/findattendance")
+	public AttendanceResponse findAttendance(
+				@RequestParam String empnum,
+				@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate adate
+			) {
+		return adminService.findAttendanceByDate(empnum, adate);
 	}
 	
 
