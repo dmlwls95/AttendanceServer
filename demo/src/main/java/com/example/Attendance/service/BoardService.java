@@ -20,10 +20,14 @@ import javax.transaction.Transactional;
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final NotificationService notificationService;
 
     public void write(BoardDTO dto) {
         Board entity = toEntity(dto);
         boardRepository.save(entity);
+        
+        try {notificationService.createNotification(entity);} 
+        catch (Exception e) {e.printStackTrace();}
     }
 
     public Page<BoardDTO> getListByType(String type, Pageable pageable) {
