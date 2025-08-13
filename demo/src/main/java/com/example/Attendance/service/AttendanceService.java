@@ -23,11 +23,13 @@ import org.springframework.stereotype.Service;
 
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Year;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -44,8 +46,8 @@ public class AttendanceService {
 	private final UserRepository userRepository;
 	private final SimpMessagingTemplate messaging;
 	
-	private final int startOfWork = 9;
-	private final int endOfWork = 18;
+	//private final int startOfWork = 9;
+	//private final int endOfWork = 18;
 
 	
 	public void clockIn(String email)
@@ -74,11 +76,17 @@ public class AttendanceService {
 		
 		attendance.setClockIn(LocalDateTime.now());
 		
+		
+		
 		// 지각 판별
 		if(attendance.getClockIn() != null)
 		{
-			LocalTime standardStart = LocalTime.of(startOfWork, 0);
-			attendance.setIsLate(attendance.getClockIn().toLocalTime().isAfter(standardStart)? 1 : 0);
+			LocalDateTime actual = attendance.getClockIn().truncatedTo(ChronoUnit.MINUTES);
+			LocalDateTime due = LocalDateTime.of(attendance.getDate(), user.getWorkStartTime()).truncatedTo(ChronoUnit.MINUTES);
+			boolean isLate = actual.isAfter(due);
+			attendance.setIsLate(isLate ? 1 : 0);
+			//LocalTime standardStart = LocalTime.of(user.getWorkStartTime(), 0);
+			//attendance.setIsLate(attendance.getClockIn().toLocalTime().isAfter(standardStart)? 1 : 0);
 		}
 		
 		attendanceRepository.save(attendance);
@@ -87,41 +95,57 @@ public class AttendanceService {
 		messaging.convertAndSendToUser(user.getEmail(), "/queue/attendance", new AttendanceSignal("CHECKED_IN", LocalDateTime.now()));
 	}
 	
-	public void clockOut(String email)
-	{
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-		
-		LocalDate today = LocalDate.now();
-		
-		Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
-				.orElseThrow(() -> new IllegalArgumentException("출근 기록이 없습니다"));
-		
-		
-		/*if(attendance.getClockOut() != null)
-		{
-			throw new IllegalArgumentException("이미 퇴근 했습니다");
-		}*/
-		
-		attendance.setClockOut(LocalDateTime.now());
-		
-		
-		double hours = (double) java.time.Duration.between(
-				attendance.getClockIn().getHour() < startOfWork ? LocalDateTime.of(attendance.getDate().getYear(), attendance.getDate().getMonth(), attendance.getDate().getDayOfMonth(), startOfWork, 0, 0) : attendance.getClockIn()
-				, attendance.getClockOut().getHour() > endOfWork ? LocalDateTime.of(attendance.getDate().getYear(), attendance.getDate().getMonth(), attendance.getDate().getDayOfMonth(), endOfWork, 0, 0) : attendance.getClockOut() ).toMinutes() / 60;
-		
-		attendance.setTotalHours(hours);
-		
-		// 조퇴 판별
-		if(attendance.getClockOut() != null)
-		{
-			LocalTime standardEnd = LocalTime.of(endOfWork, 0);
-			
-			attendance.setIsLeftEarly(attendance.getClockOut().toLocalTime().isBefore(standardEnd) ? 1 : 0);
-		}
-		
-		attendanceRepository.save(attendance);
-				
+	public void clockOut(String email) {
+	    User user = userRepository.findByEmail(email)
+	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+	    LocalDate today = LocalDate.now();
+
+	    Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
+	            .orElseThrow(() -> new IllegalArgumentException("출근 기록이 없습니다"));
+
+	    if (attendance.getClockIn() == null) {
+	        throw new IllegalStateException("출근 기록이 없어 퇴근을 기록할 수 없습니다.");
+	    }
+
+	    // --- 사용자 근무 시간 (LocalTime) ---
+	    LocalTime startTime = user.getWorkStartTime();
+	    LocalTime endTime   = user.getWorkEndTime();
+	    if (startTime == null || endTime == null) {
+	        // 필요 시 안전 기본값 (원래 상수 쓰던 값). 둘 다 채워져 있다면 이 블록은 삭제해도 됨.
+	        startTime = startTime != null ? startTime : LocalTime.of(9, 0);
+	        endTime   = endTime   != null ? endTime   : LocalTime.of(18, 0);
+	    }
+
+	    // --- 퇴근 시간 저장 (분 단위 절삭) ---
+	    LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+	    attendance.setClockOut(now);
+
+	    // --- 근무일 경계 계산 (야간근무 고려: 종료가 시작 이전이면 다음 날 종료) ---
+	    LocalDate     workDate   = attendance.getDate();
+	    LocalDate     endDate    = endTime.isBefore(startTime) ? workDate.plusDays(1) : workDate;
+	    LocalDateTime shiftStart = LocalDateTime.of(workDate, startTime).truncatedTo(ChronoUnit.MINUTES);
+	    LocalDateTime shiftEnd   = LocalDateTime.of(endDate,   endTime  ).truncatedTo(ChronoUnit.MINUTES);
+
+	    // --- 실제 출퇴근 시각(분 단위) ---
+	    LocalDateTime clockIn  = attendance.getClockIn().truncatedTo(ChronoUnit.MINUTES);
+	    LocalDateTime clockOut = now;
+
+	    // --- 근무시간 계산: 회사 경계 내로 클램프 ---
+	    LocalDateTime from = clockIn.isBefore(shiftStart) ? shiftStart : clockIn; // max(clockIn, shiftStart)
+	    LocalDateTime to   = clockOut.isAfter(shiftEnd)   ? shiftEnd   : clockOut; // min(clockOut, shiftEnd)
+
+	    long minutes = 0;
+	    if (!to.isBefore(from)) {
+	        minutes = Duration.between(from, to).toMinutes();
+	    }
+	    attendance.setTotalHours(minutes / 60.0);
+
+	    // --- 조퇴 판별(분 단위): 종료 시각 이전에 나가면 조퇴, 같은 분이면 아님 ---
+	    boolean leftEarly = clockOut.isBefore(shiftEnd);
+	    attendance.setIsLeftEarly(leftEarly ? 1 : 0);
+
+	    attendanceRepository.save(attendance);
 	}
 	
 	public AttendanceResponse getTodayAttendance(String email)
