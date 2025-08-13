@@ -8,8 +8,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.Attendance.dto.AttendanceEventResponse;
+import com.example.Attendance.dto.AttendanceHistoryResponse;
 import com.example.Attendance.dto.AttendanceMonthlyResponse;
 import com.example.Attendance.dto.AttendanceResponse;
+import com.example.Attendance.dto.NormalResponse;
 import com.example.Attendance.entity.AttendanceEvent;
 import com.example.Attendance.service.AttendanceService;
 
@@ -45,6 +47,30 @@ public class AttendanceController {
 		attendanceService.clockOut(email);
 	}
 	
+	@GetMapping("/hasbreakout")
+	public boolean hasBreakOut(Authentication authentication)
+	{
+		String email = (String) authentication.getPrincipal();
+		return attendanceService.hasBreakOut(email);
+	}
+	
+	@Operation(summary = "외출 시작")
+	@PostMapping("/outingstart")
+	public NormalResponse outingStart(Authentication authentication)
+	{
+		String email = (String) authentication.getPrincipal();
+		return attendanceService.StartOuting(email);
+	}
+	
+	@Operation(summary = "외출 끝")
+	@PostMapping("/outingend")
+	public NormalResponse outingEnd(Authentication authentication)
+	{
+		String email = (String) authentication.getPrincipal();
+		return attendanceService.EndOuting(email);
+	}
+	
+	
 	@Operation(summary = "오늘의 출퇴근 기록")
 	@GetMapping("/today")
 	public AttendanceResponse today(Authentication auth)
@@ -55,7 +81,7 @@ public class AttendanceController {
 	
 	@Operation(summary = "기간별 근무 요약")
 	@GetMapping("/summary")
-	public List<AttendanceResponse> summary(
+	public AttendanceHistoryResponse summary(
 			@RequestParam("from") String from, 
 			@RequestParam("to") String to, 
 			Authentication auth)

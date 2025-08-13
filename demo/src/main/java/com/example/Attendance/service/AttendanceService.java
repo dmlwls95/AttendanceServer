@@ -2,8 +2,11 @@ package com.example.Attendance.service;
 
 import com.example.Attendance.controller.*;
 import com.example.Attendance.dto.AttendanceEventResponse;
+import com.example.Attendance.dto.AttendanceHistoryResponse;
 import com.example.Attendance.dto.AttendanceMonthlyResponse;
 import com.example.Attendance.dto.AttendanceResponse;
+import com.example.Attendance.dto.NormalResponse;
+import com.example.Attendance.dto.UserAttendanceHistory;
 import com.example.Attendance.entity.Attendance;
 import com.example.Attendance.entity.AttendanceEvent;
 import com.example.Attendance.entity.User;
@@ -134,6 +137,13 @@ public class AttendanceService {
 	    // --- 근무시간 계산: 회사 경계 내로 클램프 ---
 	    LocalDateTime from = clockIn.isBefore(shiftStart) ? shiftStart : clockIn; // max(clockIn, shiftStart)
 	    LocalDateTime to   = clockOut.isAfter(shiftEnd)   ? shiftEnd   : clockOut; // min(clockOut, shiftEnd)
+	    
+	    // --- 잔업시간 추가
+	    long overtimeMin = 0;
+	    if (clockOut.isAfter(shiftEnd)) {
+	        overtimeMin = Duration.between(shiftEnd, clockOut).toMinutes(); // shiftEnd 초과분만
+	    }
+	    attendance.setOvertimeMinutes((int)overtimeMin);
 
 	    long minutes = 0;
 	    if (!to.isBefore(from)) {
@@ -146,6 +156,74 @@ public class AttendanceService {
 	    attendance.setIsLeftEarly(leftEarly ? 1 : 0);
 
 	    attendanceRepository.save(attendance);
+	}
+	
+	public NormalResponse StartOuting(String email)
+	{
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+	    LocalDate today = LocalDate.now();
+
+	    Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
+	            .orElseThrow(() -> new IllegalArgumentException("출근 기록이 없습니다"));
+
+	    if (attendance.getClockIn() == null) {
+	        throw new IllegalStateException("출근 기록이 없어 외출을 기록할 수 없습니다.");
+	    }
+	    
+	    if(attendance.getOutStart() != null)
+	    {
+	    	return NormalResponse.builder()
+	    			.success(false)
+	    			.message("이미 외출한 상태에선 외출할 수 없습니다")
+	    			.build();
+	    }
+	    
+	    attendance.setOutStart(LocalDateTime.now());
+	    
+	    attendanceRepository.save(attendance);
+	 // stomp 신호 전송
+ 		messaging.convertAndSendToUser(user.getEmail(), "/queue/attendance", new AttendanceSignal("BREAK_OUT", LocalDateTime.now()));
+	    return NormalResponse.builder()
+    			.success(true)
+    			.message("외출 시작")
+    			.build();
+	    
+	}
+	
+	public NormalResponse EndOuting(String email)
+	{
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+	    LocalDate today = LocalDate.now();
+
+	    Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
+	            .orElseThrow(() -> new IllegalArgumentException("출근 기록이 없습니다"));
+
+	    if (attendance.getClockIn() == null) {
+	        throw new IllegalStateException("출근 기록이 없어 외출을 기록할 수 없습니다.");
+	    }
+	    
+	    if(attendance.getOutStart() == null)
+	    {
+	    	return NormalResponse.builder()
+	    			.success(false)
+	    			.message("외출하지 않으면 복귀 할 수 없습니다.")
+	    			.build();
+	    }
+	    
+	    attendance.setOutEnd(LocalDateTime.now());
+	    
+	    attendanceRepository.save(attendance);
+	 // stomp 신호 전송
+ 		messaging.convertAndSendToUser(user.getEmail(), "/queue/attendance", new AttendanceSignal("BREAK_IN", LocalDateTime.now()));
+	    return NormalResponse.builder()
+    			.success(true)
+    			.message("외출 끝")
+    			.build();
+	    
 	}
 	
 	public AttendanceResponse getTodayAttendance(String email)
@@ -168,21 +246,51 @@ public class AttendanceService {
 				.build();
 	}
 	
-	public List<AttendanceResponse> getSummary(String email, LocalDate from, LocalDate to)
+	
+	int workdays = 0;
+	int worktimes = 0;
+	int overtimes = 0;
+	int absencedays = 0;
+	public AttendanceHistoryResponse getSummary(String email, LocalDate from, LocalDate to)
 	{
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다"));
 		List<Attendance> list = attendanceRepository.findAllByUserAndDateBetween(user, from, to);
+		List<UserAttendanceHistory> dtos = list.stream()
+			    .<UserAttendanceHistory>map(a -> UserAttendanceHistory.builder()
+			        .workdate(a.getDate())
+			        .clock_in(a.getClockIn())
+			        .clock_out(a.getClockOut())
+			        .workMinute(a.getTotalHours() == null ? 0 : (int)Math.round(a.getTotalHours() * 60))
+			        .overtimeMinute(a.getOvertimeMinutes())
+			        .build()
+			    )
+			    .collect(Collectors.toList());
 		
-		return list.stream().map( a-> AttendanceResponse.builder()
-				.date(a.getDate())
-				.clockIn(a.getClockIn())
-				.clockOut(a.getClockOut())
-				.isLate(a.getIsLate())
-				.isLeftEarly(a.getIsLeftEarly())
-				.totalHours(a.getTotalHours())
-				.build()
-				).collect(Collectors.toList());
+		
+		
+		
+		
+		dtos.forEach(val -> {
+			if(val.getWorkMinute() >0) {
+				workdays++;
+			}else {
+				absencedays++;
+			}
+			
+			worktimes += val.getWorkMinute();
+			overtimes += val.getOvertimeMinute();
+			
+		});
+		
+		
+		return AttendanceHistoryResponse.builder()
+				.workDays(workdays)
+				.workTimes(worktimes)
+				.overTimes(overtimes)
+				.absenceDays(absencedays)
+				.historyList(dtos)
+				.build();
 		
 	}
 	
@@ -263,6 +371,23 @@ public class AttendanceService {
 		return false;
 	}
 	
+	public boolean hasBreakOut(String email)
+	{
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+		
+		LocalDate today = LocalDate.now();
+
+		Attendance attendance = attendanceRepository.findByUserAndDate(user, today)
+				.orElse(null);
+		
+		if(attendance != null && attendance.getOutStart() != null)
+		{
+			return true;
+		}
+		return false;
+	}
+	
 	
 	public List<AttendanceEventResponse> getRecentAttendance(String email ,int howmany)
 	{
@@ -286,6 +411,8 @@ public class AttendanceService {
 		public String getType() {return type;}
 		public LocalDateTime getAt() {return at;}
 	}
+	
+	
 	
 	
 
