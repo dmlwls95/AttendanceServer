@@ -13,5 +13,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>{
 	Optional<Attendance> findByUserAndDate(User user, LocalDate date);
 	List<Attendance> findAllByUserAndDateBetween(User user, LocalDate from, LocalDate to);
 	List<Attendance> findAllByDateBetween(LocalDate from, LocalDate to);
+	
+	//boolean existsByUserAndDateAndClockInAtIsNotNull(User user, LocalDate date);
 }
 //이것처럼 board도 리펙토링

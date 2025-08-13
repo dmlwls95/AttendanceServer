@@ -22,6 +22,13 @@ import lombok.RequiredArgsConstructor;
 public class AttendanceController {
 	private final AttendanceService attendanceService;
 	
+	@GetMapping("/hascheckin")
+	public boolean hasCheckIn(Authentication authentication)
+	{
+		String email = (String) authentication.getPrincipal();
+		return attendanceService.hasCheckedInToday(email);
+	}
+	
 	@Operation(summary = "출근 하기")
 	@PostMapping("/clock-in")
 	public void clockIn(Authentication authentication)

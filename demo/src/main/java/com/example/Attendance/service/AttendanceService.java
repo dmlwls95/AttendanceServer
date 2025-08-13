@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 
@@ -41,6 +42,7 @@ public class AttendanceService {
 	private final AttendanceRepository attendanceRepository;
 	private final AttendanceEventRepository attendanceEventRepository;
 	private final UserRepository userRepository;
+	private final SimpMessagingTemplate messaging;
 	
 	private final int startOfWork = 9;
 	private final int endOfWork = 18;
@@ -80,6 +82,9 @@ public class AttendanceService {
 		}
 		
 		attendanceRepository.save(attendance);
+		
+		// stomp 신호 전송
+		messaging.convertAndSendToUser(user.getEmail(), "/queue/attendance", new AttendanceSignal("CHECKED_IN", LocalDateTime.now()));
 	}
 	
 	public void clockOut(String email)
@@ -243,9 +248,22 @@ public class AttendanceService {
 		
 		
 		return attendanceEventRepository.findByUser(user, pageable).stream().map(AttendanceEventResponse::from).collect(Collectors.toList());
-		
-
 	}
+	
+	public static class AttendanceSignal{
+		private final String type;
+		private final LocalDateTime at;
+		
+		public AttendanceSignal(String type, LocalDateTime at) {
+			this.type = type;
+			this.at = at;
+			
+		}
+		public String getType() {return type;}
+		public LocalDateTime getAt() {return at;}
+	}
+	
+	
 
 	
 
