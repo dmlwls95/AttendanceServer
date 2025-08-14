@@ -679,3 +679,27 @@ SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_IN',  TIMESTAMP '2025-08-04 1
 INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
 SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_OUT', TIMESTAMP '2025-08-04 21:40:00', 'WEB' FROM users u WHERE u.email='freelance1@corp.com';
 
+-- 연차(오늘 포함되도록) : user@aaa.com / 2025-08-13 ~ 2025-08-14
+INSERT INTO LEAVE (leave_id, leave_type, start_date, end_date, reason, status, user_id)
+SELECT LEAVE_SEQ.NEXTVAL, 'Annual', DATE '2025-08-13', DATE '2025-08-14', '여름 휴가', 'APPROVED', u.id
+FROM USERS u WHERE u.email = 'user@aaa.com';
+
+-- 병가 : user@aaa.com / 2025-08-10 ~ 2025-08-11
+INSERT INTO LEAVE (leave_id, leave_type, start_date, end_date, reason, status, user_id)
+SELECT LEAVE_SEQ.NEXTVAL, 'Sick', DATE '2025-08-10', DATE '2025-08-11', '감기 몸살', 'APPROVED', u.id
+FROM USERS u WHERE u.email = 'user@aaa.com';
+
+-- 휴직(미래 기간) : user@aaa.com / 2025-08-20 ~ 2025-08-31
+INSERT INTO LEAVE (leave_id, leave_type, start_date, end_date, reason, status, user_id)
+SELECT LEAVE_SEQ.NEXTVAL, 'LeaveOfAbsence', DATE '2025-08-20', DATE '2025-08-31', '개인 사정', 'PENDING', u.id
+FROM USERS u WHERE u.email = 'user@aaa.com';
+
+-- 연차 : admin@admin.com / 2025-09-02 ~ 2025-09-03
+INSERT INTO LEAVE (leave_id, leave_type, start_date, end_date, reason, status, user_id)
+SELECT LEAVE_SEQ.NEXTVAL, 'Annual', DATE '2025-09-02', DATE '2025-09-03', '가족 행사', 'APPROVED', u.id
+FROM USERS u WHERE u.email = 'admin@admin.com';
+
+-- 병가 : admin@admin.com / 2025-08-05 ~ 2025-08-06
+INSERT INTO LEAVE (leave_id, leave_type, start_date, end_date, reason, status, user_id)
+SELECT LEAVE_SEQ.NEXTVAL, 'Sick', DATE '2025-08-05', DATE '2025-08-06', '치과 치료', 'APPROVED', u.id
+FROM USERS u WHERE u.email = 'admin@admin.com';
