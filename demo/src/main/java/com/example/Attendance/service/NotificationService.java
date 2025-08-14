@@ -68,10 +68,11 @@ public class NotificationService {
 	
 	private void sendNotification(Notification noti) {
 		
-		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy.MM.dd , HH:mm");
+		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
 		
 		NotificationDTO dto = new NotificationDTO();
 		dto.setId(noti.getNotiId());
+		dto.setBoardid(noti.getBoard().getId());
 		dto.setTitle(noti.getBoard().getTitle());
 		dto.setWriteDate(noti.getBoard().getWriteDate().format(format));
 		dto.setWriter(noti.getBoard().getWriter());
