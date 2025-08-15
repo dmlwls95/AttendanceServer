@@ -5,6 +5,7 @@ import com.example.Attendance.dto.AttendanceEventResponse;
 import com.example.Attendance.dto.AttendanceHistoryResponse;
 import com.example.Attendance.dto.AttendanceMonthlyResponse;
 import com.example.Attendance.dto.AttendanceResponse;
+import com.example.Attendance.dto.MonthlyDashboardResponse;
 import com.example.Attendance.dto.NormalResponse;
 import com.example.Attendance.dto.UserAttendanceHistory;
 import com.example.Attendance.entity.Attendance;
@@ -36,6 +37,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+// AttendanceService.java (일부)
+import java.time.*;
+import java.time.temporal.TemporalAdjusters;
 
 
 @Service
@@ -411,11 +416,123 @@ public class AttendanceService {
 		public String getType() {return type;}
 		public LocalDateTime getAt() {return at;}
 	}
-	
-	
-	
-	
 
-	
+	//
+	public MonthlyDashboardResponse getMonthlyDashboard(String email, int year, int month) {
+	    int nowYear = Year.now().getValue();
+	    if (year > nowYear) throw new IllegalArgumentException("요청한 연도는 현재 연도보다 클 수 없습니다");
+	    if (month < 1 || month > 12) throw new IllegalArgumentException("월(month)는 1~12 사이여야 합니다.");
 
+	    User user = userRepository.findByEmail(email)
+	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+	    LocalDate from = LocalDate.of(year, month, 1);
+	    LocalDate to   = from.with(TemporalAdjusters.lastDayOfMonth());
+
+	    List<Attendance> list = attendanceRepository.findAllByUserAndDateBetween(user, from, to);
+
+	    // ─ 상단 도넛
+	    int presentDays = 0;
+	    int lateDays    = 0;
+	    int weekendWorkedDays = 0; // holidayDays
+	    int workableDays = getWorkableDays(year, month);
+
+	    // ─ 중간 막대 합계(분)
+	    int totalMinutes   = 0; // 근무총분 = sum(totalHours*60)
+	    int overtimeMin    = 0; // 잔업합계(분) = sum(attendance.overtimeMinutes)
+	    int holidayMin     = 0; // 휴일근로분(토/일 근무시간)
+	    int nightMin       = 0; // 야간근로분(22:00~05:00)
+
+	    for (Attendance a : list) {
+	        LocalDate d = a.getDate();
+	        LocalDateTime in  = a.getClockIn();
+	        LocalDateTime out = a.getClockOut();
+
+	        boolean worked = (in != null);
+	        if (worked) {
+	            presentDays++;
+	            if (a.getIsLate() != null && a.getIsLate() == 1) lateDays++;
+
+	            boolean weekend = (d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY);
+	            if (weekend) weekendWorkedDays++;
+
+	            // 총 근무분
+	            if (a.getTotalHours() != null) {
+	                totalMinutes += (int)Math.round(a.getTotalHours() * 60);
+	            }
+	            // 잔업분
+	            overtimeMin += (a.getOvertimeMinutes() == 0 ? 0 : a.getOvertimeMinutes());
+
+	            if (in != null && out != null) {
+	                // ─ 휴일근로(토/일이면 전체 근무시간을 휴일근로로 취급)
+	                if (weekend) {
+	                    holidayMin += minutesBetween(in, out);
+	                }
+
+	                // ─ 야간근로(22:00~24:00, 00:00~05:00)
+	                nightMin += calcNightMinutes(in, out);
+	            }
+	        }
+	    }
+
+	    int absentDays = Math.max(0, workableDays - presentDays);
+
+	    // 소정근로분 = 총근무분 - (잔업 + 휴일 + 야간) (음수방지)
+	    int normalMin = Math.max(0, totalMinutes - overtimeMin - holidayMin - nightMin);
+
+	    return MonthlyDashboardResponse.builder()
+	            .presentDays(presentDays)
+	            .lateDays(lateDays)
+	            .absentDays(absentDays)
+	            .holidayDays(weekendWorkedDays)
+	            .normalMinutes(normalMin)
+	            .overtimeMinutes(overtimeMin)
+	            .holidayMinutes(holidayMin)
+	            .nightMinutes(nightMin)
+	            .workableDays(workableDays)
+	            .build();
+	}
+
+	/* 두 시각 사이의 ‘분’ */
+	private static int minutesBetween(LocalDateTime a, LocalDateTime b) {
+	    if (a == null || b == null) return 0;
+	    if (b.isBefore(a)) return 0;
+	    return (int)Duration.between(a, b).toMinutes();
+	}
+
+	/* 구간 겹침(분) */
+	private static int overlapMinutes(LocalDateTime aStart, LocalDateTime aEnd,
+	                                  LocalDateTime bStart, LocalDateTime bEnd) {
+	    if (aStart == null || aEnd == null || bStart == null || bEnd == null) return 0;
+	    if (aEnd.isBefore(aStart) || bEnd.isBefore(bStart)) return 0;
+	    LocalDateTime start = aStart.isAfter(bStart) ? aStart : bStart;
+	    LocalDateTime end   = aEnd.isBefore(bEnd)   ? aEnd   : bEnd;
+	    if (!end.isAfter(start)) return 0;
+	    return (int)Duration.between(start, end).toMinutes();
+	}
+
+	/* 야간근로분 계산: 22:00~24:00 + 00:00~05:00 (跨일 처리) */
+	private static int calcNightMinutes(LocalDateTime in, LocalDateTime out) {
+	    // 같은 날짜의 22~24
+	    LocalDateTime n1Start = LocalDateTime.of(in.toLocalDate(), LocalTime.of(22, 0));
+	    LocalDateTime n1End   = LocalDateTime.of(in.toLocalDate(), LocalTime.MIDNIGHT); // 24:00
+
+	    // 다음날 00~05
+	    LocalDateTime n2Start = LocalDateTime.of(in.toLocalDate().plusDays(1), LocalTime.MIDNIGHT);
+	    LocalDateTime n2End   = LocalDateTime.of(in.toLocalDate().plusDays(1), LocalTime.of(5, 0));
+
+	    int m1 = overlapMinutes(in, out, n1Start, n1End);
+	    int m2 = overlapMinutes(in, out, n2Start, n2End);
+
+	    // 만약 출근이 자정 이후였다면, 기준일을 out 기준으로 한 번 더 체크
+	    if (in.toLocalDate().isBefore(out.toLocalDate())) {
+	        LocalDateTime n3Start = LocalDateTime.of(out.toLocalDate(), LocalTime.of(22, 0));
+	        LocalDateTime n3End   = LocalDateTime.of(out.toLocalDate(), LocalTime.MIDNIGHT);
+	        LocalDateTime n4Start = LocalDateTime.of(out.toLocalDate().plusDays(1), LocalTime.MIDNIGHT);
+	        LocalDateTime n4End   = LocalDateTime.of(out.toLocalDate().plusDays(1), LocalTime.of(5, 0));
+	        m1 = Math.max(m1, overlapMinutes(in, out, n3Start, n3End));
+	        m2 = Math.max(m2, overlapMinutes(in, out, n4Start, n4End));
+	    }
+	    return m1 + m2;
+	}
 }

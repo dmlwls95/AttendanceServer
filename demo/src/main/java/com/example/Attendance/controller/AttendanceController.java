@@ -17,6 +17,8 @@ import com.example.Attendance.service.AttendanceService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+// import 추가
+import com.example.Attendance.dto.MonthlyDashboardResponse;
 
 @RestController
 @RequestMapping("/attendance")
@@ -111,6 +113,15 @@ public class AttendanceController {
 		return attendanceService.getRecentAttendance(email, howmany);
 	}
 	
-	
-
+	//
+	@Operation(summary = "월간 대시보드(도넛/막대용) — 가공된 월 통합 통계")
+	@GetMapping("/dashboard/monthly")
+	public MonthlyDashboardResponse dashboardMonthly(
+	        @RequestParam int year,
+	        @RequestParam int month,
+	        Authentication auth
+	) {
+	    String email = (String) auth.getPrincipal();
+	    return attendanceService.getMonthlyDashboard(email, year, month);
+	}
 }
