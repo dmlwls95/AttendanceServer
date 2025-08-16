@@ -1,33 +1,19 @@
 package com.example.Attendance.config;
 
-import java.util.Arrays;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class CorsConfig {
+public class CorsConfig implements WebMvcConfigurer {
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration cfg = new CorsConfiguration();
-
-        // WebConfig보고 프론트 개발 서버 주소 동일하게 적기
-        cfg.setAllowedOrigins(Arrays.asList(
-            "http://localhost:5173",
-            "http://localhost:5174"
-        ));
-        // (참고) 포트가 자주 바뀐다면 setAllowedOriginPatterns 사용 가능
-        // cfg.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "http://localhost:5174"));
-
-        cfg.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));
-        cfg.setAllowedHeaders(Arrays.asList("*"));
-        cfg.setAllowCredentials(true); // 쿠키/세션 허용
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", cfg);
-        return source;
+    //최소한의 CORS 설정, 기존 WebConfig와 충돌 없이 주간 근태관리 API를 안정적 호출 지원.
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/work/**")  // 주간 근태관리 관련 API 경로
+            .allowedOrigins("http://localhost:5173", "http://localhost:5174") // 프론트 개발 서버 주소
+            .allowedMethods("*")     // 모든 HTTP 메서드 허용
+            .allowedHeaders("*")     // 모든 헤더 허용
+            .allowCredentials(true); // 쿠키, 세션 등 인증정보 허용
     }
 }
