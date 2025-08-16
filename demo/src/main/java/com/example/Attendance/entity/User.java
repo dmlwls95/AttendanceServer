@@ -3,6 +3,7 @@ package com.example.Attendance.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 
 import javax.persistence.*;
 
@@ -62,7 +63,7 @@ public class User {
 	private String profileImageUrl;
 	
 	@Column(name = "hiredate")
-    private LocalDateTime hiredate;
+    private LocalDate hiredate;
 	
 	//Entity 자체는 Localtime이지만 db엔 09:00 같은 값으로 저장됌
 	@Column(name = "work_start_time", length = 5)

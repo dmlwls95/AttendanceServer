@@ -13,17 +13,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
 
+
 @RestController
-@RequestMapping("/admin/board")
-public class BoardController {
+@RequestMapping("/user/userboard")
+public class UserBoardController {
 
     private final BoardService boardService;
     
-    public BoardController(BoardService boardService) {
+    public UserBoardController(BoardService boardService) {
         this.boardService = boardService;
     }
 
@@ -69,6 +71,19 @@ public class BoardController {
         Map<String, String> result = new HashMap<String, String>();
         result.put("message", "삭제되었습니다.");
         return ResponseEntity.ok(result);
+    }
+    @PostMapping("/recommend/{id}")
+    public ResponseEntity<Map<String,Object>> recommend(@PathVariable Long id) {
+        int count = boardService.recommend(id);
+        Map<String,Object> body = new HashMap<>();
+        body.put("count", count);
+        return ResponseEntity.ok(body);
+    }
+    
+    @GetMapping("/recenttop")
+    public List<BoardDTO> getRecentTopBoard()
+    {
+    	return boardService.getTop10Board();
     }
 }
 

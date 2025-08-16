@@ -2,7 +2,9 @@ package com.example.Attendance.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,12 +19,20 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.Attendance.Util.LocaldateParser;
 import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
+import com.example.Attendance.dto.AdminHomepageChartDataResponse;
 import com.example.Attendance.dto.AllUsersResponse;
 import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.dto.AttendanceUpdateRequest;
@@ -30,34 +40,41 @@ import com.example.Attendance.dto.RegisterFormInfoRequest;
 import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.RegisterResponse;
 import com.example.Attendance.dto.UserResponse;
+import com.example.Attendance.dto.UserdataResponse;
+import com.example.Attendance.dto.WorkingRowDTO;
 import com.example.Attendance.entity.Attendance;
 import com.example.Attendance.entity.Department;
 import com.example.Attendance.entity.Rank;
 import com.example.Attendance.entity.User;
 import com.example.Attendance.entity.User.Role;
 import com.example.Attendance.entity.WorkType;
-import com.example.Attendance.repository.AttendanceRepository;
-import com.example.Attendance.repository.DepartmentRepository;
-import com.example.Attendance.repository.RankRepository;
-import com.example.Attendance.repository.UserRepository;
-import com.example.Attendance.repository.WorktypesRepository;
+import com.example.Attendance.repository.*;
 import com.mysql.cj.log.Log;
 
+import ch.qos.logback.classic.pattern.DateConverter;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class AdminService {
+
 	
 	private final AttendanceRepository attendanceRepository;
 	private final UserRepository userRepository;
 	private final DepartmentRepository departmentRepository;
 	private final WorktypesRepository worktypeRepository;
 	private final RankRepository rankRepository;
+	private final LeaveRepository leaveRepository;
+	
+	
+	
+	
+	private final Clock clock = Clock.systemDefaultZone();
 	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 	private final int startOfWork = 9;
 	private final int endOfWork = 18;
 	private static final Logger log = LoggerFactory.getLogger(AdminService.class);
+
 	
 	public List<AllUsersResponse> getAllUsers()
 	{
@@ -286,6 +303,7 @@ public class AdminService {
 		LocalTime start = request.getWorkstarttime() == null ? null : LocalTime.parse(request.getWorkstarttime());
 		LocalTime end = request.getWorkendtime() == null ? null : LocalTime.parse(request.getWorkendtime());
 		
+		
 		User user = User.builder()
 				.empnum(request.getEmpnum())
 				.email(request.getEmail())
@@ -298,6 +316,7 @@ public class AdminService {
 				.profileImageUrl(filename)
 				.workStartTime(start)
 				.workEndTime(end)
+				.hiredate(LocaldateParser.parseToLocalDate(request.getHiredate()))
 				.build();
 		userRepository.save(user);
 		
@@ -310,6 +329,223 @@ public class AdminService {
 				.message("성공적으로 회원가입을 완료했습니다.")
 				.build();
 	}
+	
+	public RegisterResponse UpdateUser(RegisterRequest request)
+	{
+		if(!userRepository.existsByEmail(request.getEmail()))
+		{
+			return RegisterResponse.builder()
+					.success(false)
+					.message("존재 하지 않는 사원입니다.")
+					.build();
+		}
+		
+		MultipartFile file = request.getProfileImage();
+		String filename = request.getEmpnum() + request.getWork_name() + ".png";
+		try {
+			
+			String uploadDir = System.getProperty("user.dir") + "/src/uploads/profileimages/";
+			File destination = new File(uploadDir + filename);
+			file.transferTo(destination);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			return RegisterResponse.builder()
+					.success(false)
+					.message("프로필 사진에 문제가 있습니다.")
+					.build();
+
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		
+		Role role = null;
+		if(request.getRole().toUpperCase().equals("ADMIN")) {
+			role = Role.ADMIN;
+		}else {
+			role = Role.USER;
+		}
+		
+		LocalTime start = request.getWorkstarttime() == null ? null : LocalTime.parse(request.getWorkstarttime());
+		LocalTime end = request.getWorkendtime() == null ? null : LocalTime.parse(request.getWorkendtime());
+		
+		/*User user = User.builder()
+				.empnum(request.getEmpnum())
+				.email(request.getEmail())
+				.password(passwordEncoder.encode(request.getPassword()))
+				.name(request.getWork_name())
+				.role(role)
+				.worktype(worktypeRepository.findByWorktypename(request.getWorktype()))
+				.dept(departmentRepository.findByDeptname(request.getDept()))
+				.rank(rankRepository.findByRankname(request.getRank()))
+				.profileImageUrl(filename)
+				.workStartTime(start)
+				.workEndTime(end)
+				.build();
+		*/
+		User user = userRepository.findByEmpnum(request.getEmpnum())
+			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사원 입니다."));
+		
+		user.setEmpnum(request.getEmpnum());
+		user.setName(request.getWork_name());
+		user.setEmail(request.getEmail());
+		user.setPassword(passwordEncoder.encode(request.getPassword()));
+		user.setRole(role);
+		user.setWorktype(worktypeRepository.findByWorktypename(request.getWorktype()));
+		user.setDept(departmentRepository.findByDeptname(request.getDept()));
+		user.setRank(rankRepository.findByRankname(request.getRank()));
+		user.setProfileImageUrl(filename);
+		user.setWorkStartTime(start);
+		user.setWorkEndTime(end);
+		user.setHiredate(LocaldateParser.parseToLocalDate(request.getHiredate()));
+		
+		userRepository.save(user);
+		
+		return RegisterResponse.builder()
+				.success(true)
+				.message("성공적으로 업데이트를 완료했습니다.")
+				.build();
+	}
+	
+	@Transactional
+	public RegisterResponse DeleteUserByempno(String empno)
+	{
+		if(!userRepository.existsByEmpnum(empno))
+		{
+			return RegisterResponse.builder()
+					.success(false)
+					.message("존재하지 않는 사원입니다.")
+					.build();
+		}
+		userRepository.deleteByEmpnum(empno);
+		
+		return RegisterResponse.builder()
+				.success(true)
+				.message("삭제 완료")
+				.build();
+	}
+	
+	public UserdataResponse findAndGetUserData(String empno)
+	{
+		if(!userRepository.existsByEmpnum(empno))
+		{
+			throw new IllegalArgumentException("존재하지 않는 사원 번호 입니다.");
+		}
+		
+		User usr = userRepository.findByEmpnum(empno).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사원 번호 입니다."));
+		
+		
+		return UserdataResponse.builder()
+				.empnum(empno)
+				.name(usr.getName())
+				.email(usr.getEmail())
+				.role(usr.getRole().toString())
+				.rank(usr.getRank().getRankname())
+				.worktype(usr.getWorktype().getWorktypename())
+				.depttype(usr.getDept().getDeptname())
+				.profileImageUrl(usr.getProfileImageUrl())
+				.hiredate(usr.getHiredate())
+				.workStartTime(usr.getWorkStartTime())
+				.workEndTime(usr.getWorkEndTime())
+				.build();
+	}
+	
+	public Page<UserdataResponse> getUsersPagination(int page, int size, String sortBy, String direction)
+	{
+		Sort sort = "desc".equalsIgnoreCase(direction)
+				? Sort.by(sortBy).descending()
+				: Sort.by(sortBy).ascending();
+		
+		Pageable pageable = PageRequest.of(page, size, sort);
+		
+		
+		Page<User> users = userRepository.findAll(pageable);
+		
+		return users.map(user -> new UserdataResponse(
+					user.getEmpnum(),
+					user.getName(),
+					user.getEmail(),
+					user.getRole().name(),
+					user.getRank().getRankname(),
+					user.getWorktype().getWorktypename(),
+					user.getDept().getDeptname(),
+					user.getProfileImageUrl(),
+					user.getHiredate(),
+					user.getWorkStartTime(),
+					user.getWorkEndTime()
+				));
+	}
+	
+	public AttendanceResponse findAttendanceByDate(String empno, LocalDate adate)
+	{
+		User user = userRepository.findByEmpnum(empno)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사원입니다."));
+		Attendance att = attendanceRepository.findByUserAndDate(user, adate)
+				.orElseThrow(() -> new IllegalArgumentException("해당 날짜의 데이터가 없습니다."));
+		
+		return AttendanceResponse.builder()
+				.id(att.getId())
+				.email(user.getEmail())
+				.empno(user.getEmpnum())
+				.date(att.getDate())
+				.clockIn(att.getClockIn())
+				.clockOut(att.getClockOut())
+				.isLate(att.getIsLate())
+				.isLeftEarly(att.getIsLeftEarly())
+				.isAbsence(att.getIsAbsence())
+				.outStart(att.getOutStart())
+				.outEnd(att.getOutEnd())
+				.totalHours(att.getTotalHours())
+				.build();
+	}
+	
+	
+	// 홈페이지 차트 데이터
+	public AdminHomepageChartDataResponse getTodaySummary() {
+		LocalDate today = LocalDate.now(clock);
+		
+		//전체 인원
+		int totalEmployees = Math.toIntExact(userRepository.countByRole(Role.USER));
+		
+		// 근태 집계
+		int present = Math.toIntExact(attendanceRepository.countByDateAndClockInIsNotNullAndClockOutIsNull(today));
+		int left = Math.toIntExact(attendanceRepository.countByDateAndClockOutIsNotNull(today));
+		int lateArrivals = Math.toIntExact(attendanceRepository.countByDateAndIsLate(today, 1));
+		int earlyLeaves = Math.toIntExact(attendanceRepository.countByDateAndIsLeftEarly(today, 1));
+		
+		int leave = 0;
+		if(leaveRepository != null) {
+			leave = Math.toIntExact(leaveRepository.countOnLeaveAt(today));
+		}
+		
+		int absent = Math.max(0, totalEmployees - present - left - leave );
+		
+		return new AdminHomepageChartDataResponse(today, totalEmployees, present, left, leave, absent, lateArrivals, earlyLeaves, Instant.now(clock));
+	}
+	
+	//홈페이지 근무자 리스트
+	public Page<WorkingRowDTO> getWorkingList(String dateparam,String status, int page, int size, String sortBy, String direction) {
+		LocalDate date = LocalDate.parse(dateparam);
+        if (date == null) date = LocalDate.now(clock);
+
+        Sort sort = Sort.by("empnum");
+        if (sortBy != null && !sortBy.isEmpty()) {
+            sort = Sort.by(sortBy);
+        }
+        if ("desc".equalsIgnoreCase(direction)) {
+            sort = sort.descending();
+        } else {
+            sort = sort.ascending();
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        if (status == null || status.isEmpty()) {
+            return userRepository.findWorkingList(date, pageable);
+        }
+        return userRepository.findWorkingListByStatus(date, status.toUpperCase(), pageable);
+    }
+	
 	
 
 }

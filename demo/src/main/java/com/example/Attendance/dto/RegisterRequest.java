@@ -1,5 +1,9 @@
 package com.example.Attendance.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.Attendance.entity.User.Role;
@@ -25,4 +29,7 @@ public class RegisterRequest {
 	private MultipartFile profileImage;
 	private String workstarttime;
 	private String workendtime;
+	private String hiredate;
+	
+
 }
