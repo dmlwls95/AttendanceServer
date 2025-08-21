@@ -61,6 +61,78 @@ VALUES (USER_SEQ.NEXTVAL, 'a100000002', '이프론트', 'fe1@corp.com',
         (SELECT worktypeid FROM WORKTYPES WHERE worktypename='정규직'),
         (SELECT deptid FROM DEPARTMENTS WHERE deptname='개발팀'),
         'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '09:30', '18:30');
+        
+-- HR (사원, 정규직, 인사팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000003', '정HR', 'hr1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='사원'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='정규직'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='인사팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '09:00', '18:00');
+
+-- Sales (대리, 정규직, 영업팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000004', '오영업', 'sales1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='대리'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='정규직'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='영업팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '08:30', '17:30');
+
+-- Backend (과장, 정규직, 개발팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000005', '박백엔드', 'be1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='과장'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='정규직'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='개발팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '09:00', '18:00');
+
+-- Planner (주임, 정규직, 기획팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000006', '문기획', 'plan1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='주임'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='정규직'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='기획팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '09:00', '18:00');
+
+-- QA (대리, 정규직, 개발팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000007', '최QA', 'qa1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='대리'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='정규직'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='개발팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '10:00', '19:00');
+
+-- Intern (인턴, 인사팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000008', '인턴1', 'intern1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='사원'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='인턴'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='인사팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '09:00', '18:00');
+
+-- Contract (계약직, 총무팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000009', '계약직1', 'contract1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='주임'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='계약직'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='총무팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '10:00', '19:00');
+
+-- Freelancer (프리랜서, 개발팀)
+INSERT INTO users (id, empnum, work_name, email, password, role, rankid, worktypeid, deptid, profileimageurl, work_start_time, work_end_time)
+VALUES (USER_SEQ.NEXTVAL, 'a100000010', '프리랜서1', 'freelance1@corp.com',
+        '$2a$10$uqEQ/3hmmkdOJgrfRQz8seCCzPpWUwJijt2nD78/tcv5VTTqnif4m', 'USER',
+        (SELECT rankid FROM ranks WHERE rankname='차장'),
+        (SELECT worktypeid FROM WORKTYPES WHERE worktypename='프리랜서'),
+        (SELECT deptid FROM DEPARTMENTS WHERE deptname='개발팀'),
+        'https://img.daisyui.com/images/profile/demo/yellingcat@192.webp', '13:00', '22:00');
 
 /* ===== 근태 (attendance) =====
    - 컬럼: user_id, work_date, clock_in, clock_out, is_late, is_left_early, total_hours(Double), overtime_minutes(int)

@@ -70,7 +70,7 @@ public class AdminController {
 	}
 	
 	@GetMapping("attendance/monthly-summary")
-	public List<AdminAttendanceSummaryResponse> getMonthlyAttendanceSummary(
+	public AdminAttendanceSummaryResponse getMonthlyAttendanceSummary(
 			@RequestParam int year,
 			@RequestParam int month)
 	{
@@ -114,7 +114,26 @@ public class AdminController {
 			@RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
 			)
 	{
-		String csv = adminService.generateCsvForMonth( from, to);
+		String csv = adminService.generateCsvForMonth(from, to);
+		byte[] output = csv.getBytes(StandardCharsets.UTF_8);
+		
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
+		headers.setContentDisposition(
+				ContentDisposition.attachment().filename("근무기록_"+ from + "_" + to, StandardCharsets.UTF_8).build()
+				);
+		
+		return new ResponseEntity<>(output, headers, HttpStatus.OK);
+	}
+	
+	@GetMapping("attendance/exportbyemail")
+	public ResponseEntity<byte[]> exportAttendanceCsvByEmail(
+			String email,
+			@RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+			)
+	{
+		String csv = adminService.generateCsvByEmail(email, from, to);
 		byte[] output = csv.getBytes(StandardCharsets.UTF_8);
 		
 		HttpHeaders headers = new HttpHeaders();

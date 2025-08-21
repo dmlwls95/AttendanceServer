@@ -9,8 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class AdminAttendanceSummaryResponse {
-	private Long userId;
-	private String email;
 	private int totalDaysWorked;
 	private double totalHours;
 	private double averageHours;

@@ -106,54 +106,43 @@ public class AdminService {
 	}
 	
 	
-	public List<AdminAttendanceSummaryResponse> getAttendanceMonthSummary(int year, int month)
+	public AdminAttendanceSummaryResponse getAttendanceMonthSummary(int year, int month)
 	{
 		LocalDate fromDate = LocalDate.of(year, month, 1);
 		LocalDate toDate = LocalDate.of(year, month, YearMonth.of(year, month).lengthOfMonth());
 		
 		List<User> users = userRepository.findAll();
-		List<AdminAttendanceSummaryResponse> result = new ArrayList<>();
 		
 		int getWorkableDays = AttendanceService.getWorkableDays(year, month);
-		
-		if(users.size() == 1)
-		{
-			return result;
-		}
-		
+
+		int totalDaysWorked = 0;
+		double totalHours = 0.0;
+		int missedDays = 0;
+		double averageHours = 0.0;
 		for(User user : users)
 		{
 			List<Attendance> records = attendanceRepository.findAllByUserAndDateBetween(user, fromDate, toDate);
 			
-			int totalDaysWorked = 0;
-			double totalHours = 0.0;
 						
 			for(Attendance a : records)
 			{
-				if(a.getClockIn() != null)
-				{
-					totalDaysWorked++;
-				}
 				
 				if(a.getClockOut() != null && a.getClockIn() != null && a.getTotalHours() != null)
 				{
 					totalHours += a.getTotalHours();
 				}
+				totalDaysWorked++;
 			}
-			int missedDays = Math.max(0, getWorkableDays - totalDaysWorked);
-			double averageHours = totalDaysWorked > 0 ? totalHours / totalDaysWorked : 0.0;
-			
-			result.add(AdminAttendanceSummaryResponse.builder()
-					.userId(user.getId())
-					.email(user.getEmail())
-					.totalDaysWorked(totalDaysWorked)
-					.totalHours(totalHours)
-					.averageHours(averageHours)
-					.missedDays(missedDays)
-					.build()
-					);
 		}
-		return result;
+		averageHours = totalHours / users.size();
+		missedDays = getWorkableDays - totalDaysWorked;
+		
+		return AdminAttendanceSummaryResponse.builder()
+				.totalDaysWorked(totalDaysWorked)
+				.totalHours(totalHours)
+				.missedDays(missedDays)
+				.averageHours(averageHours)
+				.build();
 	}
 	
 	public List<AttendanceResponse> getUserAttendanceRecord(String email, LocalDate from, LocalDate to)
@@ -211,6 +200,33 @@ public class AdminService {
 
 		
 		List<Attendance> records = attendanceRepository.findAllByDateBetween(from, to);
+		
+		StringBuilder result = new StringBuilder("\uFEFF");
+		result.append("날짜,이메일,출근시간,퇴근시간,지각,조퇴,총근무시간\n");
+		
+		
+		for(Attendance record : records)
+		{
+			String clockInStr = record.getClockIn() != null ?
+					record.getClockIn().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+					: "";
+			String clockOutStr = record.getClockIn() != null ?
+					record.getClockOut().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+					: "";
+			String totalHoursStr = record.getTotalHours() != null ? record.getTotalHours().toString() : "";
+			result.append(String.join(",", record.getDate().toString() , record.getUser().getEmail() , clockInStr, clockOutStr,record.getIsLate().toString(),record.getIsLeftEarly().toString(), totalHoursStr) + "\n") ;
+		}
+		
+		return result.toString();
+	}
+	
+	public String generateCsvByEmail(String email, LocalDate from, LocalDate to)
+	{ 
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 유저"));
+		
+		
+		List<Attendance> records = attendanceRepository.findAllByUserAndDateBetween(user,from, to);
 		
 		StringBuilder result = new StringBuilder("\uFEFF");
 		result.append("날짜,이메일,출근시간,퇴근시간,지각,조퇴,총근무시간\n");
