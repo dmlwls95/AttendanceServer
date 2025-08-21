@@ -21,14 +21,15 @@ import javax.validation.constraints.NotNull;
     name = "attendance_events"
 )
 @SequenceGenerator(
-    name = "attendance_event_seq",
-    sequenceName = "ATTENDANCE_EVENT_SEQ",
+    name = "attendance_events_seq",
+    sequenceName = "ATTENDANCE_EVENTS_SEQ",
     allocationSize = 1
 )
 public class AttendanceEvent {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "attendance_event_seq")
+	@Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "attendance_events_seq")
+    @SequenceGenerator(name = "attendance_events_seq", sequenceName = "ATTENDANCE_EVENTS_SEQ", allocationSize = 1)
     private Long id;
 
     @NotNull

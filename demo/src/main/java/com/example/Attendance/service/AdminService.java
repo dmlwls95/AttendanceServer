@@ -2,7 +2,9 @@ package com.example.Attendance.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.Attendance.Util.LocaldateParser;
 import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
+import com.example.Attendance.dto.AdminHomepageChartDataResponse;
 import com.example.Attendance.dto.AllUsersResponse;
 import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.dto.AttendanceUpdateRequest;
@@ -37,6 +41,7 @@ import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.RegisterResponse;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.dto.UserdataResponse;
+import com.example.Attendance.dto.WorkingRowDTO;
 import com.example.Attendance.entity.Attendance;
 import com.example.Attendance.entity.Department;
 import com.example.Attendance.entity.Rank;
@@ -59,6 +64,12 @@ public class AdminService {
 	private final DepartmentRepository departmentRepository;
 	private final WorktypesRepository worktypeRepository;
 	private final RankRepository rankRepository;
+	private final LeaveRepository leaveRepository;
+	
+	
+	
+	
+	private final Clock clock = Clock.systemDefaultZone();
 	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 	private final int startOfWork = 9;
 	private final int endOfWork = 18;
@@ -489,6 +500,51 @@ public class AdminService {
 				.build();
 	}
 	
+	
+	// 홈페이지 차트 데이터
+	public AdminHomepageChartDataResponse getTodaySummary() {
+		LocalDate today = LocalDate.now(clock);
+		
+		//전체 인원
+		int totalEmployees = Math.toIntExact(userRepository.countByRole(Role.USER));
+		
+		// 근태 집계
+		int present = Math.toIntExact(attendanceRepository.countByDateAndClockInIsNotNullAndClockOutIsNull(today));
+		int left = Math.toIntExact(attendanceRepository.countByDateAndClockOutIsNotNull(today));
+		int lateArrivals = Math.toIntExact(attendanceRepository.countByDateAndIsLate(today, 1));
+		int earlyLeaves = Math.toIntExact(attendanceRepository.countByDateAndIsLeftEarly(today, 1));
+		
+		int leave = 0;
+		if(leaveRepository != null) {
+			leave = Math.toIntExact(leaveRepository.countOnLeaveAt(today));
+		}
+		
+		int absent = Math.max(0, totalEmployees - present - left - leave );
+		
+		return new AdminHomepageChartDataResponse(today, totalEmployees, present, left, leave, absent, lateArrivals, earlyLeaves, Instant.now(clock));
+	}
+	
+	//홈페이지 근무자 리스트
+	public Page<WorkingRowDTO> getWorkingList(String dateparam,String status, int page, int size, String sortBy, String direction) {
+		LocalDate date = LocalDate.parse(dateparam);
+        if (date == null) date = LocalDate.now(clock);
+
+        Sort sort = Sort.by("empnum");
+        if (sortBy != null && !sortBy.isEmpty()) {
+            sort = Sort.by(sortBy);
+        }
+        if ("desc".equalsIgnoreCase(direction)) {
+            sort = sort.descending();
+        } else {
+            sort = sort.ascending();
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        if (status == null || status.isEmpty()) {
+            return userRepository.findWorkingList(date, pageable);
+        }
+        return userRepository.findWorkingListByStatus(date, status.toUpperCase(), pageable);
+    }
 	
 	
 

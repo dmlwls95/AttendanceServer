@@ -35,6 +35,9 @@ public class Attendance {
 
     @Column(name = "total_hours")
     private Double totalHours;
+    
+    @Column(name = "overtime_minutes")
+    private int overtimeMinutes;
 
     @Column(name = "is_late")
     @Builder.Default

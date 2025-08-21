@@ -27,8 +27,13 @@ public class NotificationStatus {
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id")
-	private User user;
+	private User users;
 	
+	@Enumerated(EnumType.STRING)
 	@Column(name = "is_read")
-	private Boolean isRead = false;
+	private ReadType isRead = ReadType.NOTREAD;
+	
+	public enum ReadType{
+		NOTREAD, READ
+	}
 }

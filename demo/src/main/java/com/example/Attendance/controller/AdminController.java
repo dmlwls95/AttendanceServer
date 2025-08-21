@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Attendance.dto.AdminAttendanceSummaryResponse;
+import com.example.Attendance.dto.AdminHomepageChartDataResponse;
 import com.example.Attendance.dto.AllUsersResponse;
 import com.example.Attendance.dto.AttendanceResponse;
 import com.example.Attendance.dto.AttendanceUpdateRequest;
@@ -33,6 +34,7 @@ import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.RegisterResponse;
 import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.dto.UserdataResponse;
+import com.example.Attendance.dto.WorkingRowDTO;
 import com.example.Attendance.service.AdminService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -180,6 +182,26 @@ public class AdminController {
 		return adminService.findAttendanceByDate(empnum, adate);
 	}
 	
+	
+	//*******홈페이지
+	@GetMapping("today-summarychart")
+	public AdminHomepageChartDataResponse getTodaySummaryChart()
+	{
+		return adminService.getTodaySummary();
+	}
+	//근무자 리스트
+	@GetMapping("attendance/working-list")
+    @Operation(summary = "오늘(또는 지정일) 근무자 리스트 (상태 포함)")
+    public Page<WorkingRowDTO> workingList(
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String status,   // PRESENT | LEFT | ABSENT | LEAVE
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "empnum") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        return adminService.getWorkingList(date, status, page, size, sortBy, direction);
+    }
 
 
 }
