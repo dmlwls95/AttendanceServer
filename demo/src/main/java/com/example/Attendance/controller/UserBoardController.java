@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,9 +31,19 @@ public class UserBoardController {
     }
 
     @PostMapping("/write")
-    public ResponseEntity<Map<String,String>> write(@RequestBody BoardDTO dto) {
+    public ResponseEntity<Map<String, String>> write(@RequestBody BoardDTO dto) {
+        // 공지사항은 일반 사용자가 작성 못하게 막고 싶은 경우
+        if ("NOTICE".equals(dto.getBoardType())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "공지사항은 등록할 수 없습니다.");
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN) // 403 금지 상태
+                    .body(error);
+        }
+
+        // 정상 등록
         boardService.write(dto);
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new HashMap<>();
         result.put("message", "글이 등록되었습니다.");
         return ResponseEntity.ok(result);
     }
