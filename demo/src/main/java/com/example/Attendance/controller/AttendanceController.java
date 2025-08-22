@@ -18,7 +18,9 @@ import com.example.Attendance.service.AttendanceService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-// import 추가
+
+// import 주간 월간 분석 DTO 추가
+import com.example.Attendance.dto.WeeklyDashboardResponse;
 import com.example.Attendance.dto.MonthlyDashboardResponse;
 
 @RestController
@@ -93,6 +95,8 @@ public class AttendanceController {
 		return attendanceService.getSummary(email, LocalDate.parse(from), LocalDate.parse(to));
 	}
 	
+	
+	
 	@Operation(summary = "월간 근무 통계 조회")
 	@GetMapping("/summary/monthly")
 	public AttendanceMonthlyResponse summaryMonth(
@@ -114,7 +118,22 @@ public class AttendanceController {
 		return attendanceService.getRecentAttendance(email, howmany);
 	}
 	
-	//월간
+	//-----------------------------------------------------------------------------------------
+	
+	
+	// 유저 주간 근무 정보
+	@Operation(summary = "주간 근무 통계 조회")
+	@GetMapping("/dashboard/weekly")
+	public WeeklyDashboardResponse dashboardWeekly(
+	        @RequestParam String date,
+	        Authentication auth
+	) {
+		String email = (String) auth.getPrincipal();
+		
+		return attendanceService.getWeeklyDashboard(email, LocalDate.parse(date));
+	}
+	
+	// 유저 월간 근무 정보
 	// ─────────────────────────────────────────────────────────────
 	// 월간 대시보드(도넛/막대/카드 상단용)
 	// GET /attendance/dashboard/monthly?year=YYYY&month=M
