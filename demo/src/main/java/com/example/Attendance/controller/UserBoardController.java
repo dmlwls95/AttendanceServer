@@ -2,6 +2,7 @@ package com.example.Attendance.controller;
 
 import com.example.Attendance.dto.BoardDTO;
 import com.example.Attendance.dto.BoardUpdateDTO;
+import com.example.Attendance.dto.NormalResponse;
 import com.example.Attendance.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,21 +32,29 @@ public class UserBoardController {
     }
 
     @PostMapping("/write")
-    public ResponseEntity<Map<String, String>> write(@RequestBody BoardDTO dto) {
+    public NormalResponse write(@RequestBody BoardDTO dto) {
+    	
+    	// normalresponse = new NormalResponse();
+    	
         // 공지사항은 일반 사용자가 작성 못하게 막고 싶은 경우
         if ("NOTICE".equals(dto.getBoardType())) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "공지사항은 등록할 수 없습니다.");
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN) // 403 금지 상태
-                    .body(error);
+            
+        	//NormalResponse normalresponse = new NormalResponse();
+            //normalresponse.setSuccess(false);
+            //normalresponse.setMessage("공지사항은 관리자만 쓸 수 있습니다");
+        	return NormalResponse.builder()
+        			.success(false)
+        			.message("공지사항은 관리자만 쓸 수 있습니다")
+        			.build();
         }
 
         // 정상 등록
         boardService.write(dto);
-        Map<String, String> result = new HashMap<>();
-        result.put("message", "글이 등록되었습니다.");
-        return ResponseEntity.ok(result);
+                
+    	return NormalResponse.builder()
+    			.success(true)
+    			.message("등록성공")
+    			.build();
     }
     
     @GetMapping("/list/byType")
@@ -60,33 +69,39 @@ public class UserBoardController {
     }
 
     @GetMapping("/detail/{id}")
-    public ResponseEntity<?> detail(@PathVariable Long id) {
+    public BoardDTO detail(@PathVariable Long id) {
         BoardDTO board = boardService.getDetail(id);
-        return ResponseEntity.ok(board);
+        return board;
     }
     /* 게시글 수정 */
     @PutMapping("/edit/{id}/{type}")
-    public ResponseEntity<?> editBoard(
+    public NormalResponse editBoard(
             @PathVariable Long id,
             @PathVariable String type,    // 필요 없다면 제거 가능
             @RequestBody @Valid BoardUpdateDTO dto) {
 
         boardService.updateBoard(id, dto);
-        Map<String, String> body = Collections.singletonMap("message", "게시글이 수정되었습니다.");
-        return ResponseEntity.ok(body);
+        
+        return NormalResponse.builder()
+        		.success(true)
+        		.message("게시글 수정성공")
+        		.build();
         }
     
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public NormalResponse delete(@PathVariable Long id) {
         boardService.delete(id);
-        Map<String, String> result = new HashMap<String, String>();
-        result.put("message", "삭제되었습니다.");
-        return ResponseEntity.ok(result);
+        return NormalResponse.builder()
+        		.success(true)
+        		.message("삭제 성공")
+        		.build();
     }
+    
     @PostMapping("/recommend/{id}")
-    public ResponseEntity<Map<String,Object>> recommend(@PathVariable Long id) {
+    public ResponseEntity<Map<String,Integer>> recommend(@PathVariable Long id) {
+    	
         int count = boardService.recommend(id);
-        Map<String,Object> body = new HashMap<>();
+        Map<String,Integer> body = new HashMap<>();
         body.put("count", count);
         return ResponseEntity.ok(body);
     }

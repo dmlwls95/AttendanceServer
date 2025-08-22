@@ -8,6 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class NormalResponse {
-	private boolean success;
+	private boolean success; //true
 	private String message;
 }
