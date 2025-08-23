@@ -293,15 +293,15 @@ public class AttendanceService {
             		Attendance.builder()
             		.user(user)
                     .date(dayofweek)
-                    .clockIn(dayofweek.atStartOfDay())
-                    .clockOut(dayofweek.atStartOfDay())
+                    .clockIn(null)
+                    .clockOut(null)
                     .totalHours(0.0)
                     .overtimeMinutes(0)
                     .isLate(0)
                     .isLeftEarly(0)
                     .isAbsence(0)
-                    .outStart(dayofweek.atStartOfDay())
-                    .outEnd(dayofweek.atStartOfDay())
+                    .outStart(null)
+                    .outEnd(null)
                     .build());
             
             weekly_info.add(attendance);
@@ -309,143 +309,118 @@ public class AttendanceService {
         
         
         System.out.println(weekly_info.size());
-//        for(LocalDate day = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));!day.isAfter(sunday); day = day.plusDays(1)) {
-//        	if(day.getDayOfWeek().equals(DayOfWeek.SATURDAY) || day.getDayOfWeek().equals(DayOfWeek.SUNDAY)) {
-//        		weekly_info.add(Attendance.builder()
-//        		.user(user)
-//                .date(day)
-//                .clockIn(day.atStartOfDay())
-//                .clockOut(day.atStartOfDay())
-//                .isAbsence(0)
-//                .isLate(0)
-//                .isLeftEarly(0)
-//                .overtimeMinutes(0)
-//                .build());
-//        	}
-//        }
-//        
-//        System.out.println(weekly_info.size());
         
         // DTO에 넣기 위한 Info
         List<DayOfWeekResponse> day_info = new ArrayList<DayOfWeekResponse>();
-        long nTotalWorktime = 0, nTotalOvertime = 0, nLeftTime = 0, nTotalTime = 0;
+        long TotalWorktime = 0, TotalOvertime = 0, LeftTime = 0, TotalTime = 0;
         
         WeeklyDashboardResponse dto = new WeeklyDashboardResponse();
         
         for(Attendance weekly_tmp : weekly_info) {
         	DayOfWeekResponse day_tmp = new DayOfWeekResponse();
-    		
-        	long totalWorkTime = 0;
-    		long totalOutTime = 0;
-    		
-        	if(weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SATURDAY) 
-        			|| weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SUNDAY)) {
-        		day_tmp.setDayOfweek(
-            			weekly_tmp.getDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN)
-            			);
+    		    		
+    		// 주말인 상황
+        	if(weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SATURDAY) || 
+        		weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SUNDAY)) 
+        	{
+        		day_tmp.setDayOfweek(weekly_tmp.getDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN));
         		day_tmp.setDate(weekly_tmp.getDate());
-        		day_tmp.setWorkTime(0);
-        		day_tmp.setOverTime(0);
-        		day_tmp.setStatus(StatusType.DEFAULT);
         		day_tmp.setDayType(DayType.WEEKEND);
-        	}
-        	else if(!weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SATURDAY) 
-        			&& !weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SUNDAY) 
-        			&& (weekly_tmp == null && weekly_tmp.getDate().isAfter(date))){
-        		day_tmp.setDayOfweek(
-            			weekly_tmp.getDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN)
-            			);
-        		day_tmp.setDate(weekly_tmp.getDate());
-        		day_tmp.setWorkTime(0);
-        		day_tmp.setOverTime(0);
-        		day_tmp.setStatus(StatusType.DEFAULT);
-        		day_tmp.setDayType(DayType.WEEKDAY);
+        		
+        		// 출근 기록이 없다면
+				if (weekly_tmp.getClockIn() == null) {
+					day_tmp.setWorkTime(0);
+					day_tmp.setOverTime(0);
+					day_tmp.setStatus(StatusType.DEFAULT);
+				}
         	}
         	else {
-            	day_tmp.setDayOfweek(
-            			weekly_tmp.getDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN)
-            			);
-            	
-            	day_tmp.setDate(weekly_tmp.getDate());
-        		
-        		// 출근 시간 9시, 퇴근 시간 16시
-        		LocalDateTime startTime = LocalDateTime.of(weekly_tmp.getDate(), weekly_tmp.getUser().getWorkStartTime());
-        		LocalDateTime endTime = LocalDateTime.of(weekly_tmp.getDate(), weekly_tmp.getUser().getWorkEndTime()) ;
-        	
-        		// 실제 출근 시간, 실제 퇴근 시간
-        		LocalDateTime clockIn = weekly_tmp.getClockIn().isBefore(startTime) == true ? 
-        				LocalDateTime.of(weekly_tmp.getClockIn().getYear(), 
-        				weekly_tmp.getClockIn().getMonthValue(), 
-        				weekly_tmp.getClockIn().getDayOfMonth(),
-        				9, 0) : weekly_tmp.getClockIn();
-        	
-        		LocalDateTime clockOut = weekly_tmp.getClockOut().isAfter(endTime) == true ?
-        				LocalDateTime.of(weekly_tmp.getClockOut().getYear(), 
-        				weekly_tmp.getClockOut().getMonthValue(), 
-        				weekly_tmp.getClockOut().getDayOfMonth(),
-        				18, 0) : weekly_tmp.getClockOut();
-        	
-        		// 외출 시간, 외출 복귀 시간
-        		LocalDateTime outStart = weekly_tmp.getOutStart();
-        		LocalDateTime outEnd = weekly_tmp.getOutEnd();
-        	
-        		// 출근, 퇴근, 외출 시간,을 모두 고려해서 WorkTime 세팅
-        		if(clockIn != null && clockOut != null) {
-        		
-        			totalWorkTime = Duration.between(clockIn, clockOut).toMinutes();
-        		
-        			if(outStart != null && outEnd != null)
-        				totalOutTime = Duration.between(outStart, outEnd).toMinutes();
-        			
-        			day_tmp.setWorkTime(totalWorkTime - totalOutTime);
-        		}
-        		else if(clockIn != null && clockOut == null) {
-        		
-        			totalWorkTime = Duration.between(clockIn, LocalDateTime.now()).toMinutes();
-        		
-        			if(outStart != null && outEnd != null)
-        				totalOutTime = Duration.between(outStart, outEnd).toMinutes();
-        		
-        			day_tmp.setWorkTime(totalWorkTime - totalOutTime);
-        		}
-        		else {
-        			day_tmp.setWorkTime(0);
-        		}
-        	
-        		day_tmp.setOverTime(weekly_tmp.getOvertimeMinutes());
-
-        	
-        		if(weekly_tmp.getIsLate() == 0 
-        				&& weekly_tmp.getClockIn() != null
-        				&& weekly_tmp.getIsLeftEarly() == 0) 
-        		{day_tmp.setStatus(StatusType.NORMAL);}
-        		else if(weekly_tmp.getIsLate() == 1) {day_tmp.setStatus(StatusType.LATE);}
-        		else if(weekly_tmp.getClockIn() == null) {day_tmp.setStatus(StatusType.ABSENCE);}
-        		else if(weekly_tmp.getIsLeftEarly() == 1) {day_tmp.setStatus(StatusType.LEFTEARLY);}
-        		else if(weekly_tmp.getIsLate() == 1 
-        				&& weekly_tmp.getIsLeftEarly() == 1)
-        		{day_tmp.setStatus(StatusType.LATEANDLEFTEARLY);}
-        		
-        		day_tmp.setDayType(DayType.WEEKDAY);
-        	}
-        	
-        	day_info.add(day_tmp);
-        	nTotalWorktime += day_tmp.getWorkTime();
-        	nTotalOvertime += day_tmp.getOverTime();
-        	nLeftTime = (weekly_info.size() - 2) * 9 * 60 - nTotalWorktime;
-        	nTotalTime = nTotalWorktime + nTotalOvertime;
+				// 평일 이라면
+				day_tmp.setDayOfweek(
+						weekly_tmp.getDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN));
+				day_tmp.setDate(weekly_tmp.getDate());
+				day_tmp.setWorkTime(calculateWorkTime(weekly_tmp));
+				day_tmp.setOverTime(weekly_tmp.getOvertimeMinutes());
+				day_tmp.setDayType(DayType.WEEKDAY);
+				day_tmp.setStatus(getstatus(weekly_tmp, date));
+			}
+			day_info.add(day_tmp);
+			TotalWorktime += day_tmp.getWorkTime();
+			TotalOvertime += day_tmp.getOverTime();
+			LeftTime = (weekly_info.size() - 2) * 9 * 60 - TotalWorktime;
+			TotalTime = TotalWorktime + TotalOvertime;
         }
-        
         
         return WeeklyDashboardResponse.builder()
         		.info(day_info)
-        		.totalWorktime(nTotalWorktime)
-        		.totalOvertime(nTotalOvertime)
-        		.leftTime(nLeftTime)
-        		.totalTime(nTotalTime)
+        		.totalWorktime(TotalWorktime)
+        		.totalOvertime(TotalOvertime)
+        		.leftTime(LeftTime)
+        		.totalTime(TotalTime)
                 .build();
     }
     
+ public long calculateWorkTime(Attendance info) {
+		
+		long totalWorkTime = 0, totalOutTime = 0;
+
+		// DB에 저장된 실제 출근 시간
+		LocalDateTime startTime = LocalDateTime.of(info.getDate(), info.getUser().getWorkStartTime());
+		// DB에 저장된 실제 퇴근 시간
+		LocalDateTime endTime = LocalDateTime.of(info.getDate(), info.getUser().getWorkEndTime());
+		
+		
+		LocalDateTime clockIn = null, clockOut = null;;
+		if (info.getClockIn() != null && info.getClockOut() != null) {
+			// 출근 시간이 9시 이전이면 9시로 기록, 이후면 이후 시간 기록
+			clockIn = info.getClockIn().isBefore(startTime) == true ? LocalDateTime.of(info.getClockIn().getYear(),
+					info.getClockIn().getMonthValue(), info.getClockIn().getDayOfMonth(), 9, 0) : info.getClockIn();
+
+			// 퇴근 시간이 18시 이후면 18시로 기록, 이전이면 이전 시간 기록
+			clockOut = info.getClockOut().isAfter(endTime) == true ? LocalDateTime.of(info.getClockOut().getYear(),
+					info.getClockOut().getMonthValue(), info.getClockOut().getDayOfMonth(), 18, 0) : info.getClockOut();
+		}
+		// 외출 시간, 외출 복귀 시간
+		LocalDateTime outStart = info.getOutStart();
+		LocalDateTime outEnd = info.getOutEnd();
+		
+		// 출근, 퇴근, 외출 시간,을 모두 고려해서 WorkTime 세팅
+
+		// 출근, 퇴근 둘다 null 값이 아니라면
+		if (clockIn != null && clockOut != null) {
+
+			totalWorkTime = Duration.between(clockIn, clockOut).toMinutes();
+
+			if (outStart != null && outEnd != null)
+				totalOutTime = Duration.between(outStart, outEnd).toMinutes();
+		}
+		// 퇴근만 null 값일 때 => 아직 퇴근하지 않았을 경우
+		else if (clockIn != null && clockOut == null) {
+
+			totalWorkTime = Duration.between(clockIn, LocalDateTime.now()).toMinutes();
+
+			if (outStart != null && outEnd != null)
+				totalOutTime = Duration.between(outStart, outEnd).toMinutes();
+		}
+		// 둘다 null 값 일 때 -> 결근. 일한 값이 없음.
+		else {
+			return 0;
+		}
+		
+		return totalWorkTime - totalOutTime;
+ }
+
+ public StatusType getstatus(Attendance info, LocalDate date) {
+	 
+		if (info.getIsLate() == 0 && info.getClockIn() != null &&info.getIsLeftEarly() == 0){return StatusType.NORMAL;} 
+		else if (info.getIsLate() == 1) {return StatusType.LATE;} 
+		else if (info.getDate().isBefore(date) &&info.getClockIn() == null) {return StatusType.ABSENCE;} 
+		else if (info.getIsLeftEarly() == 1) {return StatusType.LEFTEARLY;} 
+		else if (info.getIsLate() == 1 && info.getIsLeftEarly() == 1) {return StatusType.LATEANDLEFTEARLY;}
+		
+		return StatusType.DEFAULT;
+ }
+ 
  // ─────────────────────────────────────────────────────────────
  // 월간 대시보드 계산 (토/일만 휴일로 간주, 공휴일 미포함 요청사항 반영)
  // ─────────────────────────────────────────────────────────────
