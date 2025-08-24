@@ -329,6 +329,8 @@ public class AttendanceService {
         		
         		// 출근 기록이 없다면
 				if (weekly_tmp.getClockIn() == null) {
+					day_tmp.setClockIn(null);
+					day_tmp.setClockOut(null);
 					day_tmp.setWorkTime(0);
 					day_tmp.setOverTime(0);
 					day_tmp.setStatus(StatusType.DEFAULT);
@@ -343,6 +345,8 @@ public class AttendanceService {
 				day_tmp.setOverTime(weekly_tmp.getOvertimeMinutes());
 				day_tmp.setDayType(DayType.WEEKDAY);
 				day_tmp.setStatus(getstatus(weekly_tmp, date));
+				day_tmp.setClockIn(weekly_tmp.getClockIn().toLocalTime());
+				day_tmp.setClockOut(weekly_tmp.getClockOut().toLocalTime());
 			}
 			day_info.add(day_tmp);
 			TotalWorktime += day_tmp.getWorkTime();
@@ -359,7 +363,37 @@ public class AttendanceService {
         		.totalTime(TotalTime)
                 .build();
     }
-    
+
+//public  List<Attendance> initList(List<Attendance> info,  User user, LocalDate date){
+//	Map<LocalDate, Attendance> attendanceMap = info.stream()
+//            .collect(Collectors.toMap(Attendance::getDate, a -> a));
+//	
+//	List<Attendance> weekly_info = new ArrayList<>();
+//	 
+//	for (int i = 0; i < 7; i++) {
+//    	
+//        LocalDate dayofweek = monday.plusDays(i);
+//        
+//        Attendance attendance = attendanceMap.getOrDefault(dayofweek, 
+//        		Attendance.builder()
+//        		.user(user)
+//                .date(dayofweek)
+//                .clockIn(null)
+//                .clockOut(null)
+//                .totalHours(0.0)
+//                .overtimeMinutes(0)
+//                .isLate(0)
+//                .isLeftEarly(0)
+//                .isAbsence(0)
+//                .outStart(null)
+//                .outEnd(null)
+//                .build());
+//        
+//        weekly_info.add(attendance);
+//    }
+//	 return weekly_info;
+//}
+
  public long calculateWorkTime(Attendance info) {
 		
 		long totalWorkTime = 0, totalOutTime = 0;
