@@ -2,6 +2,8 @@ package com.example.Attendance.service;
 
 import com.example.Attendance.controller.*;
 import com.example.Attendance.dto.*;
+import com.example.Attendance.dto.DayOfWeekResponse.DayType;
+import com.example.Attendance.dto.DayOfWeekResponse.StatusType;
 import com.example.Attendance.entity.Attendance;
 import com.example.Attendance.entity.AttendanceEvent;
 import com.example.Attendance.entity.User;
@@ -14,6 +16,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -260,7 +263,198 @@ public class AttendanceService {
         public String getType() { return type; }
         public LocalDateTime getAt() { return at; }
     }
+    
+    
+    // ------------------------------
+    // 주간 근로 분석 서비스 함수
+    //-------------------------------
+    public WeeklyDashboardResponse getWeeklyDashboard(String email, LocalDate date) {
+        
+    	User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
+        LocalDate monday = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate sunday = date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        
+        List<Attendance> DB_info = attendanceRepository.findAllByUserAndDateBetweenOrderByDateAsc(user, monday, sunday);
+        
+        // 날짜별 Map으로 만들기
+        Map<LocalDate, Attendance> attendanceMap = DB_info.stream()
+            .collect(Collectors.toMap(Attendance::getDate, a -> a));
+
+        // 월~일 루프 돌면서 없는 날짜는 빈 객체로 채우기
+        List<Attendance> weekly_info = new ArrayList<>();
+        
+        for (int i = 0; i < 7; i++) {
+        	
+            LocalDate dayofweek = monday.plusDays(i);
+            
+            Attendance attendance = attendanceMap.getOrDefault(dayofweek, 
+            		Attendance.builder()
+            		.user(user)
+                    .date(dayofweek)
+                    .clockIn(null)
+                    .clockOut(null)
+                    .totalHours(0.0)
+                    .overtimeMinutes(0)
+                    .isLate(0)
+                    .isLeftEarly(0)
+                    .isAbsence(0)
+                    .outStart(null)
+                    .outEnd(null)
+                    .build());
+            
+            weekly_info.add(attendance);
+        }
+        
+        
+        System.out.println(weekly_info.size());
+        
+        // DTO에 넣기 위한 Info
+        List<DayOfWeekResponse> day_info = new ArrayList<DayOfWeekResponse>();
+        long TotalWorktime = 0, TotalOvertime = 0, LeftTime = 0, TotalTime = 0;
+        
+        WeeklyDashboardResponse dto = new WeeklyDashboardResponse();
+        
+        for(Attendance weekly_tmp : weekly_info) {
+        	DayOfWeekResponse day_tmp = new DayOfWeekResponse();
+    		    		
+    		// 주말인 상황
+        	if(weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SATURDAY) || 
+        		weekly_tmp.getDate().getDayOfWeek().equals(DayOfWeek.SUNDAY)) 
+        	{
+        		day_tmp.setDayOfweek(weekly_tmp.getDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN));
+        		day_tmp.setDate(weekly_tmp.getDate());
+        		day_tmp.setDayType(DayType.WEEKEND);
+        		
+        		// 출근 기록이 없다면
+				if (weekly_tmp.getClockIn() == null) {
+					day_tmp.setClockIn(null);
+					day_tmp.setClockOut(null);
+					day_tmp.setWorkTime(0);
+					day_tmp.setOverTime(0);
+					day_tmp.setStatus(StatusType.DEFAULT);
+				}
+        	}
+        	else {
+				// 평일 이라면
+				day_tmp.setDayOfweek(
+						weekly_tmp.getDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN));
+				day_tmp.setDate(weekly_tmp.getDate());
+				day_tmp.setWorkTime(calculateWorkTime(weekly_tmp));
+				day_tmp.setOverTime(weekly_tmp.getOvertimeMinutes());
+				day_tmp.setDayType(DayType.WEEKDAY);
+				day_tmp.setStatus(getstatus(weekly_tmp, date));
+				day_tmp.setClockIn(weekly_tmp.getClockIn().toLocalTime());
+				day_tmp.setClockOut(weekly_tmp.getClockOut().toLocalTime());
+			}
+			day_info.add(day_tmp);
+			TotalWorktime += day_tmp.getWorkTime();
+			TotalOvertime += day_tmp.getOverTime();
+			LeftTime = (weekly_info.size() - 2) * 9 * 60 - TotalWorktime;
+			TotalTime = TotalWorktime + TotalOvertime;
+        }
+        
+        return WeeklyDashboardResponse.builder()
+        		.info(day_info)
+        		.totalWorktime(TotalWorktime)
+        		.totalOvertime(TotalOvertime)
+        		.leftTime(LeftTime)
+        		.totalTime(TotalTime)
+                .build();
+    }
+
+//public  List<Attendance> initList(List<Attendance> info,  User user, LocalDate date){
+//	Map<LocalDate, Attendance> attendanceMap = info.stream()
+//            .collect(Collectors.toMap(Attendance::getDate, a -> a));
+//	
+//	List<Attendance> weekly_info = new ArrayList<>();
+//	 
+//	for (int i = 0; i < 7; i++) {
+//    	
+//        LocalDate dayofweek = monday.plusDays(i);
+//        
+//        Attendance attendance = attendanceMap.getOrDefault(dayofweek, 
+//        		Attendance.builder()
+//        		.user(user)
+//                .date(dayofweek)
+//                .clockIn(null)
+//                .clockOut(null)
+//                .totalHours(0.0)
+//                .overtimeMinutes(0)
+//                .isLate(0)
+//                .isLeftEarly(0)
+//                .isAbsence(0)
+//                .outStart(null)
+//                .outEnd(null)
+//                .build());
+//        
+//        weekly_info.add(attendance);
+//    }
+//	 return weekly_info;
+//}
+
+ public long calculateWorkTime(Attendance info) {
+		
+		long totalWorkTime = 0, totalOutTime = 0;
+
+		// DB에 저장된 실제 출근 시간
+		LocalDateTime startTime = LocalDateTime.of(info.getDate(), info.getUser().getWorkStartTime());
+		// DB에 저장된 실제 퇴근 시간
+		LocalDateTime endTime = LocalDateTime.of(info.getDate(), info.getUser().getWorkEndTime());
+		
+		
+		LocalDateTime clockIn = null, clockOut = null;;
+		if (info.getClockIn() != null && info.getClockOut() != null) {
+			// 출근 시간이 9시 이전이면 9시로 기록, 이후면 이후 시간 기록
+			clockIn = info.getClockIn().isBefore(startTime) == true ? LocalDateTime.of(info.getClockIn().getYear(),
+					info.getClockIn().getMonthValue(), info.getClockIn().getDayOfMonth(), 9, 0) : info.getClockIn();
+
+			// 퇴근 시간이 18시 이후면 18시로 기록, 이전이면 이전 시간 기록
+			clockOut = info.getClockOut().isAfter(endTime) == true ? LocalDateTime.of(info.getClockOut().getYear(),
+					info.getClockOut().getMonthValue(), info.getClockOut().getDayOfMonth(), 18, 0) : info.getClockOut();
+		}
+		// 외출 시간, 외출 복귀 시간
+		LocalDateTime outStart = info.getOutStart();
+		LocalDateTime outEnd = info.getOutEnd();
+		
+		// 출근, 퇴근, 외출 시간,을 모두 고려해서 WorkTime 세팅
+
+		// 출근, 퇴근 둘다 null 값이 아니라면
+		if (clockIn != null && clockOut != null) {
+
+			totalWorkTime = Duration.between(clockIn, clockOut).toMinutes();
+
+			if (outStart != null && outEnd != null)
+				totalOutTime = Duration.between(outStart, outEnd).toMinutes();
+		}
+		// 퇴근만 null 값일 때 => 아직 퇴근하지 않았을 경우
+		else if (clockIn != null && clockOut == null) {
+
+			totalWorkTime = Duration.between(clockIn, LocalDateTime.now()).toMinutes();
+
+			if (outStart != null && outEnd != null)
+				totalOutTime = Duration.between(outStart, outEnd).toMinutes();
+		}
+		// 둘다 null 값 일 때 -> 결근. 일한 값이 없음.
+		else {
+			return 0;
+		}
+		
+		return totalWorkTime - totalOutTime;
+ }
+
+ public StatusType getstatus(Attendance info, LocalDate date) {
+	 
+		if (info.getIsLate() == 0 && info.getClockIn() != null &&info.getIsLeftEarly() == 0){return StatusType.NORMAL;} 
+		else if (info.getIsLate() == 1) {return StatusType.LATE;} 
+		else if (info.getDate().isBefore(date) &&info.getClockIn() == null) {return StatusType.ABSENCE;} 
+		else if (info.getIsLeftEarly() == 1) {return StatusType.LEFTEARLY;} 
+		else if (info.getIsLate() == 1 && info.getIsLeftEarly() == 1) {return StatusType.LATEANDLEFTEARLY;}
+		
+		return StatusType.DEFAULT;
+ }
+ 
  // ─────────────────────────────────────────────────────────────
  // 월간 대시보드 계산 (토/일만 휴일로 간주, 공휴일 미포함 요청사항 반영)
  // ─────────────────────────────────────────────────────────────
@@ -422,6 +616,7 @@ public class AttendanceService {
      DayOfWeek dw = date.getDayOfWeek();
      return (dw == DayOfWeek.SATURDAY || dw == DayOfWeek.SUNDAY);
  }
+ 
  private long minutesOverlap(LocalDateTime a1, LocalDateTime a2,
                              LocalDateTime b1, LocalDateTime b2) {
      LocalDateTime start = a1.isAfter(b1) ? a1 : b1; // max
