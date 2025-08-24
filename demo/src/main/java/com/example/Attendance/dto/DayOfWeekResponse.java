@@ -35,4 +35,7 @@ public class DayOfWeekResponse {
 	public enum DayType{
 		WEEKDAY, WEEKEND
 	}
+	
+	private LocalTime clockIn;
+	private LocalTime clockOut;
 }
