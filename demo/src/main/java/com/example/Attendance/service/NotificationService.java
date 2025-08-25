@@ -6,6 +6,7 @@ import java.time.format.*;
 import lombok.*;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.messaging.simp.*;
 
 import com.example.Attendance.repository.NotificationRepository;
@@ -85,6 +86,15 @@ public class NotificationService {
 					"/queue/notification", 
 					dto);
 		}
+	}
+	
+	@Transactional
+	public boolean deleteNotification(Long notiId) {
+		
+		notificationstatusRepository.deleteAllById(notiId);
+		notificationRepository.deleteById(notiId);
+		
+		return false;
 	}
 	
 }
