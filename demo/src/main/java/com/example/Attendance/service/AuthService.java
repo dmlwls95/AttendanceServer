@@ -1,13 +1,17 @@
 package com.example.Attendance.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -75,6 +79,7 @@ public class AuthService {
 		String token = jwtTokenProvider.createToken(user.getEmail());
 		return new LoginResponse(token, user.getRole().toString());
 	}
+	
 	
 	
 	public NavDataResponse getNavData(String email)

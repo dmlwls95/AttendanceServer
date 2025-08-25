@@ -4,9 +4,13 @@ import com.example.Attendance.service.AuthService;
 import com.example.Attendance.dto.LoginRequest;
 import com.example.Attendance.dto.LoginResponse;
 import com.example.Attendance.dto.NavDataResponse;
+import com.example.Attendance.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +28,6 @@ public class AuthController {
 	{
 		return authService.login(request);
 	}
-	
 	@GetMapping("/navdata")
 	public NavDataResponse getNavdata(Authentication auth)
 	{
