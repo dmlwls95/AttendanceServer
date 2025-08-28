@@ -775,3 +775,20 @@ FROM USERS u WHERE u.email = 'admin@admin.com';
 INSERT INTO LEAVE (leave_id, leave_type, start_date, end_date, reason, status, user_id)
 SELECT LEAVE_SEQ.NEXTVAL, 'Sick', DATE '2025-08-05', DATE '2025-08-06', '치과 치료', 'APPROVED', u.id
 FROM USERS u WHERE u.email = 'admin@admin.com';
+
+INSERT INTO notification (noti_id, board_id)
+SELECT NOTIFICATION_SEQ.NEXTVAL, id
+FROM board
+WHERE board_type = 'NOTICE';
+
+INSERT INTO notistatus (status_id, notification_id, user_id, is_read)
+SELECT NOTISTATUS_SEQ.NEXTVAL, n.noti_id, u.id, 
+	CASE
+			WHEN DBMS_RANDOM.VALUE < 0.5 THEN 'NOTREAD'
+			ELSE 'READ'
+	END
+FROM notification n
+CROSS JOIN users u
+WHERE n.board_id IN (
+    SELECT id FROM board WHERE board_type = 'NOTICE'
+);
