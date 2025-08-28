@@ -7,6 +7,7 @@ import lombok.*;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.messaging.simp.*;
 
 import com.example.Attendance.repository.NotificationRepository;
@@ -17,7 +18,7 @@ import com.example.Attendance.entity.User;
 import com.example.Attendance.entity.Board;
 import com.example.Attendance.entity.Notification;
 import com.example.Attendance.entity.NotificationStatus;
-
+import com.example.Attendance.entity.NotificationStatus.ReadType;
 import com.example.Attendance.dto.NotificationDTO;
 
 
@@ -31,12 +32,12 @@ public class NotificationService {
 	private final SimpMessagingTemplate messagingTemplate;
 	
 	public void createNotification(Board board) {
-		Notification noti = saveNotificationStatus(board);
+		Notification noti = saveNotificationInfo(board);
 		
 		sendNotification(noti);
 	}
 	
-	private Notification saveNotificationStatus(Board board) {
+	private Notification saveNotificationInfo(Board board) {
 		
 		// Notification 생성 후 board 정보 set, Repository에 저장
 		Notification noti = new Notification();
@@ -70,6 +71,7 @@ public class NotificationService {
 	private void sendNotification(Notification noti) {
 		
 		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+		NotificationStatus notiStatus = new NotificationStatus();
 		
 		NotificationDTO dto = new NotificationDTO();
 		dto.setId(noti.getNotiId());
@@ -77,7 +79,7 @@ public class NotificationService {
 		dto.setTitle(noti.getBoard().getTitle());
 		dto.setWriteDate(noti.getBoard().getWriteDate().format(format));
 		dto.setWriter(noti.getBoard().getWriter());
-		
+		dto.setIsRead(NotificationStatus.ReadType.NOTREAD);
 		List<User> user_List = userRepository.findAll();
 		
 		for(User user : user_List) {
@@ -87,6 +89,33 @@ public class NotificationService {
 					dto);
 		}
 	}
+	
+	public List<NotificationDTO> initNotification(String email) {
+		
+		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+		List<NotificationDTO> dto = new ArrayList<NotificationDTO>();
+		
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+		
+		List<NotificationStatus> notificationList = notificationstatusRepository.findByUsersOrderByStatusIdDesc(user);
+		
+		for(NotificationStatus noti : notificationList) {
+			NotificationDTO temp = new NotificationDTO();
+			
+			temp.setId(noti.getNotification().getNotiId());
+			temp.setBoardid(noti.getNotification().getBoard().getId());
+			temp.setTitle(noti.getNotification().getBoard().getTitle());
+			temp.setWriteDate(noti.getNotification().getBoard().getWriteDate().format(format));
+			temp.setWriter(noti.getNotification().getBoard().getWriter());
+			temp.setIsRead(noti.getIsRead());
+			dto.add(temp);
+		}
+		
+		
+		return dto;
+	}
+	
 	
 	@Transactional
 	public boolean deleteNotification(Long notiId) {
