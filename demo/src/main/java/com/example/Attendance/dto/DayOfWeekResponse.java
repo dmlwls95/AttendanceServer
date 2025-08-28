@@ -36,6 +36,6 @@ public class DayOfWeekResponse {
 		WEEKDAY, WEEKEND
 	}
 	
-	private LocalTime clockIn;
-	private LocalTime clockOut;
+	private LocalDateTime clockIn;
+	private LocalDateTime clockOut;
 }

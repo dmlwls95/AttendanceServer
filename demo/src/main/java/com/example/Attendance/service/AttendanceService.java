@@ -345,8 +345,8 @@ public class AttendanceService {
 				day_tmp.setOverTime(weekly_tmp.getOvertimeMinutes());
 				day_tmp.setDayType(DayType.WEEKDAY);
 				day_tmp.setStatus(getstatus(weekly_tmp, date));
-				day_tmp.setClockIn(weekly_tmp.getClockIn().toLocalTime());
-				day_tmp.setClockOut(weekly_tmp.getClockOut().toLocalTime());
+				day_tmp.setClockIn(weekly_tmp.getClockIn());
+				day_tmp.setClockOut(weekly_tmp.getClockOut());
 			}
 			day_info.add(day_tmp);
 			TotalWorktime += day_tmp.getWorkTime();
