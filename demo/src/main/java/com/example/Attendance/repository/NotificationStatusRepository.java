@@ -16,6 +16,7 @@ public interface NotificationStatusRepository extends JpaRepository<Notification
 
 	Optional<NotificationStatus> findByNotificationAndUsers(Notification notification, User user);
 	
+	List<NotificationStatus> findByUsersOrderByStatusIdDesc(User user);
 	
 	@Modifying
 	@Query("DELETE FROM NotificationStatus ns WHERE ns.notification.notiId = :notiId")
