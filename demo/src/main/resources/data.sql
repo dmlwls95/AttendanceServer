@@ -151,6 +151,14 @@ INSERT INTO attendance (id, user_id, work_date, clock_in, clock_out, is_late, is
 VALUES (ATTENDANCE_SEQ.NEXTVAL, (SELECT id FROM users WHERE email='user@aaa.com'),
         DATE '2025-08-14', TIMESTAMP '2025-08-14 09:12:00', TIMESTAMP '2025-08-14 19:20:00', 1, 0, 8.80, 80);
 
+INSERT INTO attendance (id, user_id, work_date, clock_in, clock_out, is_late, is_left_early, total_hours, overtime_minutes)
+VALUES (ATTENDANCE_SEQ.NEXTVAL, (SELECT id FROM users WHERE email = 'user@aaa.com'),
+		DATE '2025-08-25', TIMESTAMP '2025-08-25 08:58:00', TIMESTAMP '2025-08-25 18:45:00', 0,  0,  9.00,  45);
+        
+INSERT INTO attendance (id, user_id, work_date, clock_in, clock_out, is_late, is_left_early, total_hours, overtime_minutes)
+VALUES (ATTENDANCE_SEQ.NEXTVAL, (SELECT id FROM users WHERE email = 'user@aaa.com'),
+  		DATE '2025-08-26', TIMESTAMP '2025-08-26 09:18:00', TIMESTAMP '2025-08-26 17:30:00', 1, 1, 7.20, 0);
+        
 -- dev1 (10:00~19:00)
 INSERT INTO attendance (id, user_id, work_date, clock_in, clock_out, is_late, is_left_early, total_hours, overtime_minutes)
 VALUES (ATTENDANCE_SEQ.NEXTVAL, (SELECT id FROM users WHERE email='dev1@corp.com'),
