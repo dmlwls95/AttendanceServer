@@ -1,3 +1,6 @@
+
+select * from attendance;
+
 /* ===== 기초 마스터 ===== */
 -- 직급 (ranks)  [id: rankid, seq: RANK_SEQ]
 INSERT INTO ranks (rankid, rankname) VALUES (RANK_SEQ.NEXTVAL, '사원');
@@ -597,6 +600,18 @@ INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
 SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_IN',  TIMESTAMP '2025-08-15 09:20:00', 'WEB' FROM users u WHERE u.email='user@aaa.com';
 INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
 SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_OUT', TIMESTAMP '2025-08-15 18:00:00', 'WEB' FROM users u WHERE u.email='user@aaa.com';
+
+-- 2025-08-25 출근 / 2025-08-25 퇴근
+INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
+SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_IN', TIMESTAMP '2025-08-25 08:58:00', 'WEB' FROM users u WHERE u.email='user@aaa.com';
+INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
+SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_OUT', TIMESTAMP '2025-08-25 18:45:00', 'WEB' FROM users u WHERE u.email='user@aaa.com';
+
+-- 2025-08-26 출근/2025-08-26 퇴근
+INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
+SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_IN', TIMESTAMP '2025-08-26 09:18:00', 'WEB' FROM users u WHERE u.email='user@aaa.com';
+INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
+SELECT ATTENDANCE_EVENTS_SEQ.NEXTVAL, u.id, 'CLOCK_OUT', TIMESTAMP '2025-08-26 17:30:00', 'WEB' FROM users u WHERE u.email='user@aaa.com';
 
 /* dev1@corp.com (10:00~19:00) */
 INSERT INTO ATTENDANCE_EVENTS (id, user_id, event_type, occurred_at, source)
