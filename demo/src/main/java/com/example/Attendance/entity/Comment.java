@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "board_comment") // Oracle 예약어 회피
+@Table(name = "BOARD_COMMENT") // Oracle 예약어 회피 , SQL에서 조회시 대문자로 조회되어 변경해둠.
 @Getter
 @Setter
 @NoArgsConstructor

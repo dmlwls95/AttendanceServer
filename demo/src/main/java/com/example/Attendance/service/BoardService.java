@@ -5,51 +5,66 @@ import com.example.Attendance.dto.BoardUpdateDTO;
 import com.example.Attendance.entity.Board;
 import com.example.Attendance.entity.BoardType;
 import com.example.Attendance.repository.BoardRepository;
+import com.example.Attendance.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final CommentRepository commentRepository; // 댓글 리포지토리 추가
     private final NotificationService notificationService;
 
     public void write(BoardDTO dto) {
-		Board entity = toEntity(dto);
-		boardRepository.save(entity);
+        Board entity = toEntity(dto);
+        boardRepository.save(entity);
 
-		if (entity.getBoardType() == BoardType.NOTICE) {
-			try {
-				notificationService.createNotification(entity);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+        if (entity.getBoardType() == BoardType.NOTICE) {
+            try {
+                notificationService.createNotification(entity);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public Page<BoardDTO> getListByType(String type, Pageable pageable) {
         BoardType boardType = BoardType.valueOf(type.toUpperCase());
-        return boardRepository.findByBoardType(boardType, pageable)
-                              .map(this::toDTO);   // ✅ 공통 매핑 사용
+        Page<Board> boards = boardRepository.findByBoardType(boardType, pageable);
+
+        // 댓글 수 조회 (boardId, count)
+        List<Object[]> commentCounts = commentRepository.countCommentsByBoardType(boardType);
+        Map<Long, Long> commentCountMap = commentCounts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        // DTO 변환하며 댓글수 세팅
+        return boards.map(board -> {
+            BoardDTO dto = toDTO(board);
+            dto.setCommentCount(commentCountMap.getOrDefault(board.getId(), 0L).intValue());
+            return dto;
+        });
     }
 
     public BoardDTO getDetail(Long id) {
         return boardRepository.findById(id)
-                              .map(this::toDTO)    // ✅ 공통 매핑 사용
-                              .orElse(null);
+                .map(this::toDTO)
+                .orElse(null);
     }
 
-    /* 게시글 수정 */
     @Transactional
     public void updateBoard(Long id, BoardUpdateDTO dto) {
         Board board = boardRepository.findById(id)
@@ -63,7 +78,18 @@ public class BoardService {
         boardRepository.deleteById(id);
     }
 
-    /* 추천 +1 후 카운트 반환 */
+    /**
+     * 선택 삭제 메서드 (배치 삭제)
+     */
+    @Transactional
+    public void deleteBatch(List<Long> ids) {
+        // 필요하다면 댓글도 삭제
+        // commentRepository.deleteByBoardIdIn(ids); // 댓글 삭제 메서드가 있다면 호출
+
+        // 배치 삭제
+        boardRepository.deleteAllById(ids);
+    }
+
     @Transactional
     public int recommend(Long id) {
         int updated = boardRepository.incrementRecommend(id);
@@ -74,7 +100,6 @@ public class BoardService {
         return cnt != null ? cnt : 0;
     }
 
-    /* ── 공통 매핑 ── */
     private BoardDTO toDTO(Board board) {
         return BoardDTO.builder()
                 .id(board.getId())
@@ -83,7 +108,8 @@ public class BoardService {
                 .writer(board.getWriter())
                 .writeDate(board.getWriteDate())
                 .boardType(board.getBoardType())
-                .recommendCount(board.getRecommendCount()) // 추천수 포함
+                .recommendCount(board.getRecommendCount())
+                .commentCount(0) // 기본값 0, getListByType에서 실제값 세팅
                 .build();
     }
 
@@ -93,14 +119,14 @@ public class BoardService {
                 .content(dto.getContent())
                 .writer(dto.getWriter())
                 .writeDate(dto.getWriteDate() != null ? dto.getWriteDate() : LocalDateTime.now())
-                .boardType(dto.getBoardType())   // DTO가 BoardType을 직접 들고있는 전제
-                // recommendCount는 DB DEFAULT 0이면 생략
+                .boardType(dto.getBoardType())
                 .build();
     }
-    
-    /* ── 인기글 반환 ── */
-    public List<BoardDTO> getTop10Board(){
-    	List<Board> boardList = boardRepository.findTop10ByOrderByRecommendCountDesc();
-    	return boardList.stream().map(board ->  toDTO(board)).collect(Collectors.toList());
+
+    public List<BoardDTO> getTop10Board() {
+        List<Board> boardList = boardRepository.findTop10ByOrderByRecommendCountDesc();
+        return boardList.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 }

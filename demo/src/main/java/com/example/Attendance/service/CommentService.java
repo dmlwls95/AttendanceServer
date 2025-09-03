@@ -21,36 +21,39 @@ public class CommentService {
     private final BoardRepository boardRepository;
 
     public void save(CommentDTO dto) {
-    	 log.info("💬 save() 요청 → dto={}", dto);
+        log.info("save() 요청 → dto={}", dto);
         Board board = boardRepository.findById(dto.getBoardId())
                 .orElseThrow(() -> new RuntimeException("해당 게시글이 존재하지 않습니다."));
-        log.info("📌 boardType={}", board.getBoardType());
         Comment comment = Comment.builder()
-                .writer(dto.getWriter())
+                .writer(dto.getWriter())          // 꼭 필요합니다
                 .content(dto.getContent())
                 .createdAt(LocalDateTime.now())
                 .board(board)
                 .build();
 
         commentRepository.save(comment);
-        log.info("✅ 댓글 저장 완료. id={}", comment.getId());
+        log.info("댓글 저장 완료. id={}", comment.getId());
     }
 
-    public List<CommentDTO> getComments(Long board_Id) {
-        return commentRepository.findCommentsByBoardId(board_Id)
+    public List<CommentDTO> getComments(Long boardId, String currentUsername) {
+        return commentRepository.findCommentsByBoardId(boardId)
                 .stream()
                 .map(comment -> {
+                    boolean isOwner = currentUsername != null && currentUsername.equals(comment.getWriter());
                     Board board = comment.getBoard();
                     return CommentDTO.builder()
                             .id(comment.getId())
                             .writer(comment.getWriter())
                             .content(comment.getContent())
                             .createdAt(comment.getCreatedAt())
-                            .boardId(board != null ? board.getId() : null)  // ✅ NPE 방지
+                            .boardId(board != null ? board.getId() : null)
+                            .boardType(board != null ? board.getBoardType().name() : null)
+                            .isOwner(isOwner)  // 로그인 사용자와 작성자 일치 여부 반영
                             .build();
                 })
                 .collect(Collectors.toList());
     }
+
     public void delete(Long id) {
         commentRepository.deleteById(id);
     }

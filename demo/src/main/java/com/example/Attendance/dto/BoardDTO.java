@@ -18,4 +18,6 @@ public class BoardDTO {
     private LocalDateTime writeDate = LocalDateTime.now();
     private BoardType boardType; // "FREE", "NOTICE", "SUGGEST"
     private int recommendCount;
+    private int commentCount;    // 댓글수  
+
 }
