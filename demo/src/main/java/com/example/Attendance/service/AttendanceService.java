@@ -15,6 +15,7 @@ import org.springframework.data.domain.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
@@ -626,4 +627,47 @@ public class AttendanceService {
      }
      return 0;
  }
+ 
+ //csv
+ public byte[] exportCsv(User user, LocalDate start, LocalDate end) {
+	    StringBuilder sb = new StringBuilder();
+	    // CSV 헤더
+	    sb.append("근무일,출근시간,퇴근시간,근무시간,잔업시간\r\n");
+
+	    List<Attendance> records = attendanceRepository.findByUserAndDateBetween(user, start, end);
+
+	    for (Attendance r : records) {
+	        String workDate  = r.getDate() != null ? r.getDate().toString() : "";
+	        String clockIn   = r.getClockIn() != null ? r.getClockIn().toString() : "";
+	        String clockOut  = r.getClockOut() != null ? r.getClockOut().toString() : "";
+
+	        // 근무시간(분 단위 계산 → "시:분" 변환)
+	        int workMin = calcWorkMinutes(r.getClockIn(), r.getClockOut());
+	        String workTime = toHhMm(workMin);
+
+	        // 잔업시간 (DB 필드 overtimeMinutes → "시:분" 변환)
+	        String overtimeTime = toHhMm(r.getOvertimeMinutes());
+
+	        sb.append(workDate).append(',')
+	          .append(clockIn).append(',')
+	          .append(clockOut).append(',')
+	          .append(workTime).append(',')
+	          .append(overtimeTime)
+	          .append("\r\n");
+	    }
+
+	    return sb.toString().getBytes(StandardCharsets.UTF_8);
+	}
+
+	private String toHhMm(int min) {
+	    int h = min / 60;
+	    int m = min % 60;
+	    return String.format("%d 시간 %02d 분", h, m);
+	}
+
+	private int calcWorkMinutes(LocalDateTime in, LocalDateTime out) {
+	    if (in == null || out == null) return 0;
+	    long mins = ChronoUnit.MINUTES.between(in, out);
+	    return (int) Math.max(0, mins);
+	}
 }

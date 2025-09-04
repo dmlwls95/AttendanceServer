@@ -22,12 +22,27 @@ import lombok.RequiredArgsConstructor;
 // import 주간 월간 분석 DTO 추가
 import com.example.Attendance.dto.WeeklyDashboardResponse;
 import com.example.Attendance.dto.MonthlyDashboardResponse;
+// imports
+import java.nio.charset.StandardCharsets;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import com.example.Attendance.entity.User;
+import com.example.Attendance.repository.UserRepository;
+
 
 @RestController
 @RequestMapping("/attendance")
 @RequiredArgsConstructor
 public class AttendanceController {
 	private final AttendanceService attendanceService;
+	//csv
+	   private final UserRepository userRepository;
+	//
 	
 	@GetMapping("/hascheckin")
 	public boolean hasCheckIn(Authentication authentication)
@@ -160,5 +175,38 @@ public class AttendanceController {
 	) {
 	    String email = (String) auth.getPrincipal();
 	    return attendanceService.getWeeklyKpi(email, LocalDate.parse(from), LocalDate.parse(to));
+	}
+	
+	//csv
+	@GetMapping(value = "/export", produces = "text/csv")
+	public ResponseEntity<byte[]> exportCsvForMe(
+	        Authentication authentication,
+	        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+	        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+	) {
+	    if (authentication == null || !authentication.isAuthenticated()) {
+	        return ResponseEntity.status(401).build();
+	    }
+
+	    // 프로젝트가 (String) principal 구조이므로 그대로 사용
+	    String email = (String) authentication.getPrincipal();
+
+	    User user = userRepository.findByEmail(email)
+	            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + email));
+
+	    byte[] csv = attendanceService.exportCsv(user, start, end);
+	    if (csv == null) csv = new byte[0];
+
+	    // 파일명 안전 처리
+	    String filename = String.format("attendance_%s_%s_%s.csv",
+	            email.replaceAll("[\\\\/:*?\"<>|]", "_"), start, end);
+
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
+	    headers.setContentDisposition(
+	            ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build()
+	    );
+
+	    return ResponseEntity.ok().headers(headers).body(csv);
 	}
 }

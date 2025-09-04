@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.Attendance.entity.Attendance;
 import com.example.Attendance.entity.User;
 
+
 public interface AttendanceRepository extends JpaRepository<Attendance, Long>{
 	Optional<Attendance> findByUserAndDate(User user, LocalDate date);
 	List<Attendance> findAllByUserAndDateBetween(User user, LocalDate from, LocalDate to);
@@ -22,5 +23,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>{
 	
 	
 	//boolean existsByUserAndDateAndClockInAtIsNotNull(User user, LocalDate date);
+	
+	//csv
+	List<Attendance> findByUserAndDateBetween(User user, LocalDate start, LocalDate end);
 }
 //이것처럼 board도 리펙토링
