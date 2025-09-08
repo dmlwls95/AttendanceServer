@@ -175,13 +175,20 @@ public class AdminController {
 		return adminService.UpdateUser(request);
 	}
 	
+	/*
+	 * @DeleteMapping("usermanagement/userdelete") public RegisterResponse
+	 * DeleteUser(
+	 * 
+	 * @RequestParam String empnum ) { return
+	 * adminService.DeleteUserByempno(empnum); }
+	 */
+	
 	@DeleteMapping("usermanagement/userdelete")
-	public RegisterResponse DeleteUser(
-				@RequestParam String empnum
-			)
-	{
-		return adminService.DeleteUserByempno(empnum);
+	public RegisterResponse DeleteUser(@RequestParam String empnum) {
+	    return adminService.softDeleteUserByEmpnum(empnum); 
 	}
+
+	
 	
 	@GetMapping("usermanagement/userlist")
 	public Page<UserdataResponse> list(

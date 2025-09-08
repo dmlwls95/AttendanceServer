@@ -46,6 +46,14 @@ public class User {
 		USER, ADMIN
 	}
 	
+	public enum Delete {
+		NOTDELETE, DELETE
+	}
+	
+	@Enumerated(EnumType.STRING) 
+    @Column(name = "is_deleted", nullable = false)
+    private User.Delete isDeleted = User.Delete.NOTDELETE;
+	
 	@ManyToOne
 	@JoinColumn(name= "rankid")
 	private Rank rank;
@@ -73,5 +81,7 @@ public class User {
     @Column(name = "work_end_time", length = 5)
     @Convert(converter = LocalTimeStringConverter.class)
     private LocalTime workEndTime;
+
+
 
 }
