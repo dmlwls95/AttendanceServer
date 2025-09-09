@@ -46,13 +46,13 @@ public class User {
 		USER, ADMIN
 	}
 	
-	public enum Delete {
-		NOTDELETE, DELETE
-	}
-	
-	@Enumerated(EnumType.STRING) 
-    @Column(name = "is_deleted", nullable = false)
-    private User.Delete isDeleted = User.Delete.NOTDELETE;
+//	public enum Delete {
+//		NOTDELETE, DELETE
+//	}
+//	
+//	@Enumerated(EnumType.STRING) 
+//    @Column(name = "is_deleted", nullable = false)
+//    private User.Delete isDeleted = User.Delete.NOTDELETE;
 	
 	@ManyToOne
 	@JoinColumn(name= "rankid")

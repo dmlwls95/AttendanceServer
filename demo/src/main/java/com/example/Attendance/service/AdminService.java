@@ -78,7 +78,7 @@ public class AdminService {
 	
 	public List<AllUsersResponse> getAllUsers()
 	{
-		List<AllUsersResponse> records =  userRepository.findAllByIsDeleted(User.Delete.NOTDELETE)
+		List<AllUsersResponse> records =  userRepository.findAll()
 				.stream()
 				.map( usr -> AllUsersResponse.builder()
 					.name(usr.getName())
@@ -113,9 +113,7 @@ public class AdminService {
 		LocalDate fromDate = LocalDate.of(year, month, 1);
 		LocalDate toDate = LocalDate.of(year, month, YearMonth.of(year, month).lengthOfMonth());
 		
-		List<User> users = userRepository.findAll().stream()
-			    .filter(u -> u.getIsDeleted() == User.Delete.NOTDELETE)
-			    .collect(Collectors.toList());
+		List<User> users = userRepository.findAll();
 		
 		int getWorkableDays = AttendanceService.getWorkableDays(year, month);
 
@@ -337,7 +335,6 @@ public class AdminService {
 				.workStartTime(start)
 				.workEndTime(end)
 				.hiredate(LocaldateParser.parseToLocalDate(request.getHiredate()))
-				.isDeleted(User.Delete.NOTDELETE) 
 				.build();
 		userRepository.save(user);
 		
@@ -428,29 +425,23 @@ public class AdminService {
 				.message("성공적으로 업데이트를 완료했습니다.")
 				.build();
 	}
-	
-	/*
-	 * @Transactional public RegisterResponse DeleteUserByempno(String empno) {
-	 * if(!userRepository.existsByEmpnum(empno)) { return RegisterResponse.builder()
-	 * .success(false) .message("존재하지 않는 사원입니다.") .build(); }
-	 * userRepository.deleteByEmpnum(empno);
-	 * 
-	 * return RegisterResponse.builder() .success(true) .message("삭제 완료") .build();
-	 * }
-	 */
-	
+		
 	@Transactional
-	public RegisterResponse softDeleteUserByEmpnum(String empnum) {
-	    User user = userRepository.findByEmpnum(empnum)
-	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사원입니다."));
-
-	    user.setIsDeleted(User.Delete.DELETE); // 소프트 삭제
-	    userRepository.save(user);
-
-	    return RegisterResponse.builder()
-	            .success(true)
-	            .message("탈퇴 처리 완료 (Soft Delete)")
-	            .build();
+	public RegisterResponse DeleteUserByempno(String empno)
+	{
+		if(!userRepository.existsByEmpnum(empno))
+		{
+			return RegisterResponse.builder()
+					.success(false)
+					.message("존재하지 않는 사원입니다.")
+					.build();
+		}
+		userRepository.deleteByEmpnum(empno);
+		
+		return RegisterResponse.builder()
+				.success(true)
+				.message("삭제 완료")
+				.build();
 	}
 
 	
@@ -488,7 +479,8 @@ public class AdminService {
 		Pageable pageable = PageRequest.of(page, size, sort);
 		
 		
-		Page<User> users = (Page<User>) userRepository.findAllByIsDeleted(User.Delete.NOTDELETE, pageable);
+		//Page<User> users = (Page<User>) userRepository.findAllByIsDeleted(User.Delete.NOTDELETE, pageable);
+		Page<User> users = userRepository.findAll(pageable);
 		
 		return users.map(user -> new UserdataResponse(
 					user.getEmpnum(),
@@ -534,7 +526,7 @@ public class AdminService {
 		LocalDate today = LocalDate.now(clock);
 		
 		//전체 인원
-		int totalEmployees = Math.toIntExact(userRepository.countByRoleAndIsDeleted(Role.USER, User.Delete.NOTDELETE));
+		int totalEmployees = Math.toIntExact(userRepository.countByRole(Role.USER));
 		
 		// 근태 집계
 		int present = Math.toIntExact(attendanceRepository.countByDateAndClockInIsNotNullAndClockOutIsNull(today));
