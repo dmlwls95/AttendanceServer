@@ -3,7 +3,6 @@ package com.example.Attendance.service;
 import java.io.File;
 import java.io.IOException;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,14 +11,12 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +36,6 @@ import com.example.Attendance.dto.AttendanceUpdateRequest;
 import com.example.Attendance.dto.RegisterFormInfoRequest;
 import com.example.Attendance.dto.RegisterRequest;
 import com.example.Attendance.dto.RegisterResponse;
-import com.example.Attendance.dto.UserResponse;
 import com.example.Attendance.dto.UserdataResponse;
 import com.example.Attendance.dto.WorkingRowDTO;
 import com.example.Attendance.entity.Attendance;
@@ -49,9 +45,7 @@ import com.example.Attendance.entity.User;
 import com.example.Attendance.entity.User.Role;
 import com.example.Attendance.entity.WorkType;
 import com.example.Attendance.repository.*;
-import com.mysql.cj.log.Log;
 
-import ch.qos.logback.classic.pattern.DateConverter;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -73,7 +67,6 @@ public class AdminService {
 	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 	private final int startOfWork = 9;
 	private final int endOfWork = 18;
-	private static final Logger log = LoggerFactory.getLogger(AdminService.class);
 
 	
 	public List<AllUsersResponse> getAllUsers()

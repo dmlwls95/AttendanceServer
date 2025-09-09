@@ -35,6 +35,7 @@ public class NotificationStatus {
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name = "is_read")
+	@Builder.Default
 	private ReadType isRead = ReadType.NOTREAD;
 	
 	public enum ReadType{

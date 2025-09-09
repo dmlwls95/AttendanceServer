@@ -1,5 +1,3 @@
-
-
 /* ===== 기초 마스터 ===== */
 -- 직급 (ranks)  [id: rankid, seq: RANK_SEQ]
 INSERT INTO ranks (rankid, rankname) VALUES (RANK_SEQ.NEXTVAL, '사원');

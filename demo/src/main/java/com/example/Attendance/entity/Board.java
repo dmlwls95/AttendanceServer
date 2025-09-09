@@ -33,6 +33,7 @@ public class Board {
     @OneToMany(mappedBy = "board",
                cascade = CascadeType.ALL,   // Board 삭제 → 댓글 자동 삭제
                orphanRemoval = true)        // 컬렉션에서 빠진 댓글도 삭제
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
     
     /*------------추천 컬렉션-----------*/
