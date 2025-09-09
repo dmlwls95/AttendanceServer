@@ -5,6 +5,9 @@ import lombok.*;
 import java.time.LocalDate;
 import javax.persistence.*;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 @Entity
 @Table(name = "leave")
 @Getter
@@ -40,7 +43,8 @@ public class Leave {
     private String status;
 
     // 신청자
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false) // 명시적으로 지정
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 }

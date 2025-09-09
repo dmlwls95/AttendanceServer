@@ -2,6 +2,10 @@ package com.example.Attendance.entity;
 
 import lombok.*;
 import javax.persistence.*;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -20,8 +24,9 @@ public class Attendance {
     @SequenceGenerator(name = "attendance_seq", sequenceName = "ATTENDANCE_SEQ", allocationSize = 1)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id") // 명시적으로 지정
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false) // 명시적으로 지정
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(name = "work_date")  // 예약어 회피 + 소문자 권장

@@ -1,6 +1,10 @@
 package com.example.Attendance.entity;
 
 import javax.persistence.*;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import lombok.*;
 
 
@@ -18,8 +22,9 @@ public class UserMonEquip {
 	@SequenceGenerator(name = "usermonequip_seq", sequenceName = "USERMONEQUIP_seq", allocationSize = 1)
 	private Long id;
 	
-	@ManyToOne
 	@JoinColumn(name ="usermon_id")
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
 	private UserMon usermon_id;
 	
 	@OneToOne

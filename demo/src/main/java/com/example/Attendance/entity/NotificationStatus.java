@@ -2,6 +2,9 @@ package com.example.Attendance.entity;
 
 import javax.persistence.*;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import lombok.*;
 
 @Entity
@@ -25,8 +28,9 @@ public class NotificationStatus {
 	@JoinColumn(name = "notification_id")
 	private Notification notification;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id")
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false) // 명시적으로 지정
+    @OnDelete(action = OnDeleteAction.CASCADE)
 	private User users;
 	
 	@Enumerated(EnumType.STRING)

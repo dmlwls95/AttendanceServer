@@ -1,5 +1,4 @@
 
-select * from attendance;
 
 /* ===== 기초 마스터 ===== */
 -- 직급 (ranks)  [id: rankid, seq: RANK_SEQ]

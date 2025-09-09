@@ -2,6 +2,9 @@ package com.example.Attendance.entity;
 
 import javax.persistence.*;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import lombok.*;
 
 @Entity
@@ -19,6 +22,7 @@ public class UserMon {
 	
 	@OneToOne
 	@JoinColumn(name = "user_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
 	private User user;
 	
 	private String mon_name;

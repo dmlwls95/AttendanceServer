@@ -1,6 +1,9 @@
 package com.example.Attendance.entity;
 
 import lombok.*;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -32,9 +35,9 @@ public class AttendanceEvent {
     @SequenceGenerator(name = "attendance_events_seq", sequenceName = "ATTENDANCE_EVENTS_SEQ", allocationSize = 1)
     private Long id;
 
-    @NotNull
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false) // 명시적으로 지정
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @NotNull
